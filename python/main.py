@@ -7,7 +7,7 @@ class MyWidget(QtWidgets.QWidget):
         super().__init__()
 
         self.buttonPert = QtWidgets.QPushButton("Afficher le graphe de la méthode PERT")
-        self.buttonGantt = QtWidgets.QPushButton("Afficher le diagramme de GANTT")
+        self.buttonGantt = QtWidgets.QPushButton("Afficher le diagramme de GANTT :)")
         self.buttonTasks = QtWidgets.QPushButton("Réalisation des tâches")
         
 

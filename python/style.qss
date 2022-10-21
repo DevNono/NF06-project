@@ -1,0 +1,15 @@
+QWidget {
+    font-family: Poppins;
+}
+
+QLabel {
+    font-family: Poppins;
+    font-weight: 600;
+    font-size: 16px;
+}
+
+QPushButton {
+    background-color: none;
+    border: none;
+    width: 50px;
+}

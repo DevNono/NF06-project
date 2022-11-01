@@ -1,38 +1,40 @@
 #include<stdio.h>
 #include<stdlib.h>
-struct link
+struct lien
 {
 	int x;
-	struct link *next;
+	struct lien *suivant;
 };
-typedef struct link node;
+typedef struct lien noeud;
 int main()
+
 {
-	int *w,*v,n,c,*t,i,x;
-	node **s,*new;
-	printf("\nEnter the total number of items :");
+	int *w,*v, *can,n,c,*t,i,x, quan;
+	noeud **s,*new;
+	printf("\nEntrer le nombre total d'objets :");
 	scanf("%d",&n);
 	w=(int *)malloc(n*(sizeof(int)));
 	v=(int *)malloc(n*(sizeof(int)));
-	printf("\nEnter the weights and values of the items one by one :");
+	can=(int *)malloc(n*(sizeof(int)));
+	printf("\nEntrer le poids et la valeur et la quantite de chaque produit:");
 	for(i=0;i<n;i++)
 	{
-		printf("\nEnter the weight of Item-%d :",i+1);
+		printf("\nEntrer le poids du produit-%d :",i+1);
 		scanf("%d",&w[i]);
-		printf("\nEnter the value of Item-%d :",i+1);
+		printf("\nEntrer sa valeur-%d :",i+1);
 		scanf("%d",&v[i]);
+		printf("\nEntrer sa quantite-%d :",i+1);
+		scanf("%d",&can[i]);
+
+		printf("Produit-%d\tPoids-%d\tvaleur-%d\tquantite-%d\n",i+1,w[i],v[i],can[i]);
 	}
 
-	for(i=0;i<n;i++)
-	{
-		printf("Item-%d\tweight-%d\tvalue-%d\n",i+1,w[i],v[i]);
-	}
 
 	
-	printf("\nEnter the capacity of the unbounded Knapsack :");
+	printf("\nEntrer la capacite du sac a dos :");
 	scanf("%d",&c);
 	t=(int *)malloc((c+1)*(sizeof(int)));
-	s=(node **)malloc((c+1)*(sizeof(node *)));
+	s=(noeud **)malloc((c+1)*(sizeof(noeud *)));
 	t[0]=0;
 	s[0]=NULL;
 	for(x=1;x<=c;x++)
@@ -42,27 +44,30 @@ int main()
 		//printf("%d\t%d\n",x,t[x]);
 		for(i=0;i<n;i++)
 		{
-			if(w[i]<=x)
+			if(w[i]<=x && can[i]>0)
 			{
+				
+				
 				if((t[x-w[i]]+v[i])>t[x])
 				{
 					t[x]=t[x-w[i]]+v[i];
 					//printf("%d\n",t[x]);
 					s[x]=s[x-w[i]];
-					new=(node *)malloc(1*(sizeof(node)));
+					new=(noeud *)malloc(1*(sizeof(noeud)));
 					new->x=i;
-					new->next=s[x];
+					new->suivant=s[x];
 					s[x]=new;
 				}
 				
 			}
+			
 		}
 		//printf("%d\t%d\n",x,t[x]);
 	}
-	printf("\nTotal value of the items in the Knapsack is %d.\nThe knapsack containts the following items :\n",t[c]);
+	printf("\nLa valeur totale des produits dans le sac A dos sont equivalentes à %d.\nLe sac a dos contient les produits suivants :\n",t[c]);
 	while(s[c]!=NULL)
 	{
-		printf("Item-%d\n",(s[c]->x)+1);
-		s[c]=s[c]->next;
+		printf("Produit-%d\n",(s[c]->x)+1);
+		s[c]=s[c]->suivant;
 	}
 }

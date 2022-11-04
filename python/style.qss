@@ -5,11 +5,20 @@ QWidget {
 QLabel {
     font-family: Poppins;
     font-weight: 600;
-    font-size: 16px;
 }
 
 QPushButton {
     background-color: none;
     border: none;
     width: 50px;
+}
+
+QTableWidget {
+    background-color: #ECECEC;
+    border-radius: 12px;
+} 
+
+QTableWidget::item:selected {
+    background-color: #12782D; 
+    color: #ffffff;
 }

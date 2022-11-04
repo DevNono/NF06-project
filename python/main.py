@@ -1,9 +1,12 @@
 from ctypes import alignment
 import sys
 import random
+import matplotlib
 import json
 import numpy as np
 from PySide6 import QtCore, QtWidgets, QtGui
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.figure import Figure
 
 list_products = list()
 filters = { "category": list(), "brand": list(), "year": 0 }
@@ -73,6 +76,11 @@ def filterAndOrderProductList():
 
     return list_products_filtered
 
+def getTotalSellingsEuros():
+    total = 0
+    for product in list_products:
+        total += product._nb_sold * product._price
+    return total
 class OrderByDialog(QtWidgets.QDialog):
     def __init__(self, parent=None):
         super(OrderByDialog, self).__init__(parent)
@@ -125,7 +133,6 @@ class OrderByDialog(QtWidgets.QDialog):
 
         parent.updateProductList()
         self.close()
-
 class FiltersDialog(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super().__init__()
@@ -214,16 +221,11 @@ class FiltersDialog(QtWidgets.QWidget):
             filters["year"] = self.filters_year_slider.value()
         else:
             filters["year"] = 0
-        print(filters)
         parent.updateProductList()
         self.close()
 
     def on_cancel_button_clicked(self):
         self.close()
-
-
-
-
 class Color(QtWidgets.QWidget):
 
     def __init__(self, color):
@@ -233,14 +235,6 @@ class Color(QtWidgets.QWidget):
         palette = self.palette()
         palette.setColor(QtGui.QPalette.Window, QtGui.QColor(color))
         self.setPalette(palette)
-
-
-
-
-
-
-
-
 class Program(QtWidgets.QWidget):
     def __init__(self):
         super().__init__()
@@ -309,8 +303,9 @@ class Program(QtWidgets.QWidget):
         self.topLayout.addLayout(self.topRightLayout)
 
         self.midLayout = QtWidgets.QHBoxLayout()
-        self.changePage = QtWidgets.QPushButton("Produits")
-        self.midLayout.addWidget(self.changePage)
+        self.changePages = QtWidgets.QPushButton("Produits")
+        self.changePages.clicked.connect(self.changePage)
+        self.midLayout.addWidget(self.changePages)
         self.orderby = QtWidgets.QPushButton("Trier par")
         self.orderby.setIcon(QtGui.QIcon("assets/orderby.svg"))
         self.orderby.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
@@ -353,12 +348,14 @@ class Program(QtWidgets.QWidget):
         self.grid.setSpacing(0)
 
         self.totalSellingsEuros = QtWidgets.QLabel("0")
+        self.totalSellingsEuros.setAlignment(QtCore.Qt.AlignCenter)
         self.totalSellingsEuros.setFont(QtGui.QFont("Poppins SemiBold", 20))
         self.totalSellingsEuros.setStyleSheet("color: #000000;")
         self.totalSellingsEurosTitle = QtWidgets.QLabel("Ventes totales (€)")
         self.totalSellingsEurosTitle.setFont(QtGui.QFont("Poppins Regular", 11))
         self.totalSellingsEurosTitle.setStyleSheet("color: #CBCBCB;")
         self.totalSellingsEurosLayout = QtWidgets.QVBoxLayout()
+        self.totalSellingsEurosLayout.setAlignment(QtCore.Qt.AlignCenter)
         self.totalSellingsEurosLayout.addWidget(self.totalSellingsEuros)
         self.totalSellingsEurosLayout.addWidget(self.totalSellingsEurosTitle)
         self.totalSellingsEurosLayout.setContentsMargins(0, 0, 0, 0)
@@ -368,18 +365,52 @@ class Program(QtWidgets.QWidget):
         self.totalSellingsEurosWidget.setStyleSheet("background-color: #F2F2F2;")
         self.totalSellingsEurosWidget.setContentsMargins(0, 0, 0, 0)
 
+        # Graph of number of products per category using matplotlib
+        self.figure = Figure()
+        self.canvas = FigureCanvas(self.figure)
+        self.ax = self.figure.add_subplot(111)
+        self.ax.set_title("Nombre de produits par catégorie")
+        self.ax.set_xlabel("Catégories")
+        self.ax.set_ylabel("Nombre de produits")
+        self.ax.set_xticks([])
+        self.ax.set_yticks([])
+        self.ax.set_facecolor("#F2F2F2")
+        self.ax.spines["top"].set_visible(False)
+        self.ax.spines["right"].set_visible(False)
+        self.ax.spines["bottom"].set_visible(False)
+        self.ax.spines["left"].set_visible(False)
+    
+
+        self.categories = []
+        self.productsPerCategory = []
+        for product in self.table.data:
+            if product["category"] not in self.categories:
+                self.categories.append(product["category"])
+                self.productsPerCategory.append(1)
+            else:
+                self.productsPerCategory[self.categories.index(product["category"])] += 1
+        self.ax.bar(self.categories, self.productsPerCategory, color="#000000")
+        self.canvas.draw()
+        self.canvas.setContentsMargins(0, 0, 0, 0)
+        self.canvas.setStyleSheet("background-color: #F2F2F2;")
+        self.canvas.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        self.canvas.setMinimumSize(500, 200)
+        self.canvas.setMaximumSize(500, 200)
+
+
+
         self.grid.addWidget(self.totalSellingsEurosWidget, 0, 0, 2, 1)
         self.grid.addWidget(Color('blue'), 2, 0, 2, 1)
         self.grid.addWidget(Color('green'), 4, 0, 2, 1)
 
-        self.grid.addWidget(Color('yellow'), 0, 2, 3, 2)
+        self.grid.addWidget(self.canvas, 0, 2, 3, 2)
         self.grid.addWidget(Color('purple'), 3, 2, 3, 2)
 
         self.gridWidget = QtWidgets.QWidget()
         self.gridWidget.setLayout(self.grid)
         self.bottomLayout.addWidget(self.gridWidget)
 
-        self.bottomLayout.setCurrentIndex(1)
+        self.bottomLayout.setCurrentIndex(0)
 
         self.mainLayout.addLayout(self.topLayout)
         self.mainLayout.addLayout(self.midLayout)
@@ -397,6 +428,12 @@ class Program(QtWidgets.QWidget):
     def showFilters(self):
         self.filtersDialog = FiltersDialog(self)
         self.filtersDialog.show()
+
+    def changePage(self):
+        if self.bottomLayout.currentIndex() == 0:
+            self.bottomLayout.setCurrentIndex(1)
+        else:
+            self.bottomLayout.setCurrentIndex(0)
         
     def setData(self, table): 
         for i in range(len(table.data)):
@@ -427,6 +464,32 @@ class Program(QtWidgets.QWidget):
         self.table.data = filterAndOrderProductList()
         self.table.setRowCount(len(self.table.data))
         self.setData(self.table)
+        self.updateStatistics()
+    
+    def updateStatistics(self):
+        self.totalSellingsEuros.setText(str(getTotalSellingsEuros()))
+        self.canvas.figure.clear()
+        self.ax = self.canvas.figure.add_subplot(111)
+        self.ax.set_title("Nombre de produits par catégorie")
+        self.ax.set_xlabel("Catégories")
+        self.ax.set_ylabel("Nombre de produits")
+        self.ax.set_xticks([])
+        self.ax.set_yticks([])
+        self.ax.set_facecolor("#F2F2F2")
+        self.ax.spines["top"].set_visible(False)
+        self.ax.spines["right"].set_visible(False)
+        self.ax.spines["bottom"].set_visible(False)
+        self.ax.spines["left"].set_visible(False)
+        self.categories = []
+        self.productsPerCategory = []
+        for product in list_products:
+            if product._category not in self.categories:
+                self.categories.append(product._category)
+                self.productsPerCategory.append(1)
+            else:
+                self.productsPerCategory[self.categories.index(product._category)] += 1
+        self.ax.bar(self.categories, self.productsPerCategory, color="#000000")
+        self.canvas.draw()
             
     def paintEvent(self, event):
         # get current window size
@@ -469,8 +532,7 @@ class Program(QtWidgets.QWidget):
 
         # close event
         if event.button() == QtCore.Qt.RightButton:
-            QtGui.qApp.exit()
-
+            QtGui.qApp.exit()   
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication([])

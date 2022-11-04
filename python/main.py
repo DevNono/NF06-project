@@ -12,13 +12,6 @@ list_products = list()
 filters = { "category": list(), "brand": list(), "year": 0 }
 order_by = { "type": "nb_sold", "order": "desc" }
 
-def hex2QColor(c):
-    """Convert Hex color to QColor"""
-    r=int(c[0:2],16)
-    g=int(c[2:4],16)
-    b=int(c[4:6],16)
-    return QtGui.QColor(r,g,b)
-
 class Product(object):
     _uid = int()
     _name = str()
@@ -247,8 +240,8 @@ class Program(QtWidgets.QWidget):
         self.setWindowFlags(QtCore.Qt.FramelessWindowHint)
         self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
 
-        self.backgroundColor = hex2QColor("ffffff")
-        self.foregroundColor = hex2QColor("eeeeee")
+        self.backgroundColor = QtGui.QColor(255,255,255)
+        self.foregroundColor = QtGui.QColor(238,238,238)
 
         self.draggable = True
         self.dragging_threshould = 5
@@ -538,7 +531,7 @@ if __name__ == "__main__":
     app = QtWidgets.QApplication([])
 
     program = Program()
-    program.resize(800, 600)
+    program.resize(960, 720)
     program.show()
 
     sys.exit(app.exec())

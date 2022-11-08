@@ -1,73 +1,85 @@
-#include<stdio.h>
-#include<stdlib.h>
-struct lien
-{
-	int x;
-	struct lien *suivant;
+#include <stdio.h>
+#include <stdlib.h>
+
+typedef struct {
+    char *name;
+    int poids;
+    int val;
+    int compte;
+} item_t;
+
+item_t items[] = {
+    {"map",                      9,   150,   1},
+    {"compass",                 13,    35,   1},
+    {"water",                  153,   200,   2},
+    {"sandwich",                50,    60,   2},
+    {"glucose",                 15,    60,   2},
+    {"tin",                     68,    45,   3},
+    {"banana",                  27,    60,   3},
+    {"apple",                   39,    40,   3},
+    {"cheese",                  23,    30,   1},
+    {"beer",                    52,    10,   3},
+    {"suntan cream",            11,    70,   1},
+    {"camera",                  32,    30,   1},
+    {"T-shirt",                 24,    15,   2},
+    {"trousers",                48,    10,   2},
+    {"umbrella",                73,    40,   1},
+    {"waterproof trousers",     42,    70,   1},
+    {"waterproof overclothes",  43,    75,   1},
+    {"note-case",               22,    80,   1},
+    {"sunglasses",               7,    20,   1},
+    {"towel",                   18,    12,   2},
+    {"socks",                    4,    50,   1},
+    {"book",                    30,    10,   2},
 };
-typedef struct lien noeud;
-int main()
 
-{
-	int *w,*v, *can,n,c,*t,i,x, quan;
-	noeud **s,*new;
-	printf("\nEntrer le nombre total d'objets :");
-	scanf("%d",&n);
-	w=(int *)malloc(n*(sizeof(int)));
-	v=(int *)malloc(n*(sizeof(int)));
-	can=(int *)malloc(n*(sizeof(int)));
-	printf("\nEntrer le poids et la valeur et la quantite de chaque produit:");
-	for(i=0;i<n;i++)
-	{
-		printf("\nEntrer le poids du produit-%d :",i+1);
-		scanf("%d",&w[i]);
-		printf("\nEntrer sa valeur-%d :",i+1);
-		scanf("%d",&v[i]);
-		printf("\nEntrer sa quantite-%d :",i+1);
-		scanf("%d",&can[i]);
+int n = sizeof (items) / sizeof (item_t);
 
-		printf("Produit-%d\tPoids-%d\tvaleur-%d\tquantite-%d\n",i+1,w[i],v[i],can[i]);
-	}
+int *knapsack (int w) {
+    int i, j, k, v, *mm, **m, *s;
+    mm = calloc((n + 1) * (w + 1), sizeof (int));
+    m = malloc((n + 1) * sizeof (int *));
+    m[0] = mm;
+    for (i = 1; i <= n; i++) {
+        m[i] = &mm[i * (w + 1)];
+        for (j = 0; j <= w; j++) {
+            m[i][j] = m[i - 1][j];
+            for (k = 1; k <= items[i - 1].compte; k++) {
+                if (k * items[i - 1].poids > j) {
+                    break;
+                }
+                v = m[i - 1][j - k * items[i - 1].poids] + k * items[i - 1].val;
+                if (v > m[i][j]) {
+                    m[i][j] = v;
+                }
+            }
+        }
+    }
+    s = calloc(n, sizeof (int));
+    for (i = n, j = w; i > 0; i--) {
+        int v = m[i][j];
+        for (k = 0; v != m[i - 1][j] + k * items[i - 1].val; k++) {
+            s[i - 1]++;
+            j -= items[i - 1].poids;
+        }
+    }
+    free(mm);
+    free(m);
+    return s;
+}
 
-
-	
-	printf("\nEntrer la capacite du sac a dos :");
-	scanf("%d",&c);
-	t=(int *)malloc((c+1)*(sizeof(int)));
-	s=(noeud **)malloc((c+1)*(sizeof(noeud *)));
-	t[0]=0;
-	s[0]=NULL;
-	for(x=1;x<=c;x++)
-	{
-		t[x]=0;
-		s[x]=NULL;
-		//printf("%d\t%d\n",x,t[x]);
-		for(i=0;i<n;i++)
-		{
-			if(w[i]<=x && can[i]>0)
-			{
-				
-				
-				if((t[x-w[i]]+v[i])>t[x])
-				{
-					t[x]=t[x-w[i]]+v[i];
-					//printf("%d\n",t[x]);
-					s[x]=s[x-w[i]];
-					new=(noeud *)malloc(1*(sizeof(noeud)));
-					new->x=i;
-					new->suivant=s[x];
-					s[x]=new;
-				}
-				
-			}
-			
-		}
-		//printf("%d\t%d\n",x,t[x]);
-	}
-	printf("\nLa valeur totale des produits dans le sac A dos sont equivalentes à %d.\nLe sac a dos contient les produits suivants :\n",t[c]);
-	while(s[c]!=NULL)
-	{
-		printf("Produit-%d\n",(s[c]->x)+1);
-		s[c]=s[c]->suivant;
-	}
+int main () {
+    int *s;
+    s = knapsack(200);
+    int i, tc = 0, tw = 0, tv = 0;
+    for (i = 0; i < n; i++) {
+        if (s[i]) {
+            printf("%-22s %5d %5d %5d\n", items[i].name, s[i], s[i] * items[i].poids, s[i] * items[i].val);
+            tc += s[i];
+            tw += s[i] * items[i].poids;
+            tv += s[i] * items[i].val;
+        }
+    }
+    printf("%-22s %5d %5d %5d\n", "compte, poids, val:", tc, tw, tv);
+    return 0;
 }

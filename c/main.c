@@ -5,7 +5,7 @@ typedef struct {
     char *name;
     int poids;
     int val;
-    int compte;
+    int nombre;
 } item_t;
 
 item_t items[] = {
@@ -44,7 +44,7 @@ int *knapsack (int w) {
         m[i] = &mm[i * (w + 1)];
         for (j = 0; j <= w; j++) {
             m[i][j] = m[i - 1][j];
-            for (k = 1; k <= items[i - 1].compte; k++) {
+            for (k = 1; k <= items[i - 1].nombre; k++) {
                 if (k * items[i - 1].poids > j) {
                     break;
                 }
@@ -69,8 +69,11 @@ int *knapsack (int w) {
 }
 
 int main () {
+    int C;
+    printf("Quelle est la taille de votre camion ? \n");
+    scanf("%d", &C);
     int *s;
-    s = knapsack(200);
+    s = knapsack(C);
     int i, tc = 0, tw = 0, tv = 0;
     for (i = 0; i < n; i++) {
         if (s[i]) {
@@ -80,6 +83,11 @@ int main () {
             tv += s[i] * items[i].val;
         }
     }
-    printf("%-22s %5d %5d %5d\n", "compte, poids, val:", tc, tw, tv);
+    printf("%-22s %5d %5d %5d\n", "nombre, poids, val:", tc, tw, tv);
     return 0;
+}
+
+int Add(int a, int b)
+{
+    return a + b;
 }

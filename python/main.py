@@ -11,6 +11,8 @@ from matplotlib.figure import Figure
 list_products = list()
 filters = { "category": list(), "brand": list(), "year": 0 }
 order_by = { "type": "nb_sold", "order": "desc" }
+to_export = list()
+trucksize = 0
 
 class Product(object):
     _uid = int()
@@ -126,6 +128,147 @@ class OrderByDialog(QtWidgets.QDialog):
 
         parent.updateProductList()
         self.close()
+class AddProductDialog(QtWidgets.QDialog):
+    def __init__(self, parent=None):
+        super(AddProductDialog, self).__init__(parent)
+        self.setWindowTitle("Ajouter un produit")
+
+        self.layout = QtWidgets.QVBoxLayout(self)
+
+        self.label = QtWidgets.QLabel("Ajouter un produit")
+        self.layout.addWidget(self.label)
+
+        self.name = QtWidgets.QLineEdit()
+        self.name.setPlaceholderText("Nom")
+        self.layout.addWidget(self.name)
+
+        self.price = QtWidgets.QLineEdit()
+        self.price.setPlaceholderText("Prix")
+        self.layout.addWidget(self.price)
+
+        self.weight = QtWidgets.QLineEdit()
+        self.weight.setPlaceholderText("Poids")
+        self.layout.addWidget(self.weight)
+
+        self.category = QtWidgets.QLineEdit()
+        self.category.setPlaceholderText("Catégorie")
+        self.layout.addWidget(self.category)
+
+        self.brand = QtWidgets.QLineEdit()
+        self.brand.setPlaceholderText("Marque")
+        self.layout.addWidget(self.brand)
+
+        self.year = QtWidgets.QLineEdit()
+        self.year.setPlaceholderText("Année")
+        self.layout.addWidget(self.year)
+
+        self.stock = QtWidgets.QLineEdit()
+        self.stock.setPlaceholderText("Stock")
+        self.layout.addWidget(self.stock)
+
+        self.button = QtWidgets.QPushButton("OK")
+        self.button.clicked.connect(lambda: self.onOK(parent))
+        self.layout.addWidget(self.button)
+
+    def onOK(self, parent):
+        global list_products
+        uid = len(list_products) + 1
+        name = self.name.text()
+        price = float(self.price.text())
+        weight = float(self.weight.text())
+        category = self.category.text()
+        brand = self.brand.text()
+        year = int(self.year.text())
+        stock = int(self.stock.text())
+        review = 0
+        nb_sold = 0
+        product = Product(uid, name, price, weight, category, brand, year, stock, review, nb_sold)
+        list_products.append(product)
+
+        parent.updateProductList()
+        self.close()
+
+class ExportProductsDialog(QtWidgets.QDialog):
+    def __init__(self, parent=None):
+        super(ExportProductsDialog, self).__init__(parent)
+        self.setWindowTitle("Exporter des produits")
+
+        self.layout = QtWidgets.QVBoxLayout(self)
+
+        self.label = QtWidgets.QLabel("Exporter des produits")
+        self.layout.addWidget(self.label)
+
+        self.index = 0
+
+        if(self.index <= len(list_products) - 1):
+            self.product = list_products[self.index]
+            self.name = QtWidgets.QLabel(self.product._name)
+            self.layout.addWidget(self.name)
+
+            self.brand = QtWidgets.QLabel(self.product._brand)
+            self.layout.addWidget(self.brand)
+
+            self.stock = QtWidgets.QLabel(str(self.product._stock))
+            self.layout.addWidget(self.stock)
+
+            self.category = QtWidgets.QLabel(self.product._category)
+            self.layout.addWidget(self.category)
+
+            self.quantity = QtWidgets.QSpinBox()
+            self.quantity.setMinimum(0)
+            self.quantity.setMaximum(self.product._stock)
+            self.quantity.setValue(0)
+            self.layout.addWidget(self.quantity)
+
+        self.button = QtWidgets.QPushButton("OK")
+        self.button.clicked.connect(lambda: self.onOK(parent))
+        self.layout.addWidget(self.button)
+
+    def onOK(self, parent):
+        if(self.index < len(list_products) - 1):
+            to_export.append({
+                self.product._name,
+                self.product._weight,
+                self.product._price,
+                self.quantity.value()
+            })
+            self.index += 1
+            self.product = list_products[self.index]
+            self.name.setText(self.product._name)
+            self.brand.setText(self.product._brand)
+            self.stock.setText(str(self.product._stock))
+            self.category.setText(self.product._category)
+            self.quantity.setMinimum(0)
+            self.quantity.setMaximum(self.product._stock)
+            self.quantity.setValue(0)
+        elif(self.index == len(list_products) - 1):
+            to_export.append({
+                self.product._name,
+                self.product._weight,
+                self.product._price,
+                self.quantity.value()
+            })
+            self.index += 1
+
+            self.layout.removeWidget(self.name)
+            self.layout.removeWidget(self.brand)
+            self.layout.removeWidget(self.stock)
+            self.layout.removeWidget(self.category)
+            self.layout.removeWidget(self.quantity)
+
+            self.name.deleteLater()
+            self.brand.deleteLater()
+            self.stock.deleteLater()
+            self.category.deleteLater()
+            self.quantity.deleteLater()
+
+            self.truckWeight = QtWidgets.QLineEdit()
+            self.truckWeight.setPlaceholderText("Poids du camion")
+            self.layout.addWidget(self.truckWeight)
+        else:
+            trucksize = float(self.truckWeight.text())
+            # TODO: Add export function
+            self.close()
 class FiltersDialog(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super().__init__()
@@ -278,6 +421,20 @@ class Program(QtWidgets.QWidget):
         self.topRightLayout.setContentsMargins(0, 0, 0, 0)
         self.topRightLayout.setSpacing(10)
         self.topRightLayout.addStretch()
+
+        self.Button = QtWidgets.QPushButton()
+        self.Button.setIcon(QtGui.QIcon("assets/export.svg"))
+        self.Button.setToolTip("Exporter des produits")
+        self.Button.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
+        self.Button.clicked.connect(self.exportProducts)
+        self.topRightLayout.addWidget(self.Button)
+
+        self.Button = QtWidgets.QPushButton()
+        self.Button.setIcon(QtGui.QIcon("assets/add.svg"))
+        self.Button.setToolTip("Ajouter un produit")
+        self.Button.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
+        self.Button.clicked.connect(self.addProduct)
+        self.topRightLayout.addWidget(self.Button)
         
         self.Button = QtWidgets.QPushButton()
         self.Button.setIcon(QtGui.QIcon("assets/export.svg"))
@@ -296,7 +453,7 @@ class Program(QtWidgets.QWidget):
         self.topLayout.addLayout(self.topRightLayout)
 
         self.midLayout = QtWidgets.QHBoxLayout()
-        self.changePages = QtWidgets.QPushButton("Produits")
+        self.changePages = QtWidgets.QPushButton("Statistiques")
         self.changePages.clicked.connect(self.changePage)
         self.midLayout.addWidget(self.changePages)
         self.orderby = QtWidgets.QPushButton("Trier par")
@@ -414,6 +571,14 @@ class Program(QtWidgets.QWidget):
             _style = f.read()
             app.setStyleSheet(_style)
     
+    def addProduct(self):
+        self.addProductDialog = AddProductDialog(self)
+        self.addProductDialog.show()
+    
+    def exportProducts(self):
+        self.exportProductsDialog = ExportProductsDialog(self)
+        self.exportProductsDialog.show()
+
     def showOrderBy(self):
         self.orderBy = OrderByDialog(self)
         self.orderBy.show()
@@ -425,8 +590,10 @@ class Program(QtWidgets.QWidget):
     def changePage(self):
         if self.bottomLayout.currentIndex() == 0:
             self.bottomLayout.setCurrentIndex(1)
+            self.changePages.setText("Produits")
         else:
             self.bottomLayout.setCurrentIndex(0)
+            self.changePages.setText("Statistiques")
         
     def setData(self, table): 
         for i in range(len(table.data)):

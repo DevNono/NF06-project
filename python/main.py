@@ -76,6 +76,35 @@ def getTotalSellingsEuros():
     for product in list_products:
         total += product._nb_sold * product._price
     return total
+
+def getProduct(is_best, category = None, brand = None):
+    if(category == None and brand == None):
+        return None
+    if(brand == None):
+        products = list(filter(lambda x: x._category == category, list_products))
+        if(is_best):
+            products.sort(key=lambda x: x._nb_sold, reverse=False)
+        else:
+            products.sort(key=lambda x: x._nb_sold, reverse=True)
+        
+        if(len(products) > 0):
+            return products[0]
+        else:
+            return None
+    elif(category == None):
+        products = list(filter(lambda x: x._brand == brand, list_products))
+        if(is_best):
+            products.sort(key=lambda x: x._nb_sold, reverse=False)
+        else:
+            products.sort(key=lambda x: x._nb_sold, reverse=True)
+
+        if(len(products) > 0):
+            return products[0]
+        else:
+            return None
+    else:
+        return None
+
 class OrderByDialog(QtWidgets.QDialog):
     def __init__(self, parent=None):
         super(OrderByDialog, self).__init__(parent)
@@ -187,7 +216,6 @@ class AddProductDialog(QtWidgets.QDialog):
 
         parent.updateProductList()
         self.close()
-
 class ExportProductsDialog(QtWidgets.QDialog):
     def __init__(self, parent=None):
         super(ExportProductsDialog, self).__init__(parent)
@@ -267,7 +295,7 @@ class ExportProductsDialog(QtWidgets.QDialog):
             self.layout.addWidget(self.truckWeight)
         else:
             trucksize = float(self.truckWeight.text())
-            # TODO: Add export function
+            # TODO: Add export function (cf. Gaudry)
             self.close()
 class FiltersDialog(QtWidgets.QWidget):
     def __init__(self, parent=None):
@@ -286,7 +314,7 @@ class FiltersDialog(QtWidgets.QWidget):
 
         self.filters_category = QtWidgets.QGroupBox("Category")
         self.layout_filters_category = QtWidgets.QVBoxLayout()
-        self.filters_category.setLayout( self.layout_filters_category)
+        self.filters_category.setLayout(self.layout_filters_category)
         self.filters_category.setCheckable(True)
         self.filters_category.setChecked(False)
         if(len(filters["category"]) > 0):
@@ -497,6 +525,8 @@ class Program(QtWidgets.QWidget):
         self.grid.setContentsMargins(0, 0, 0, 0)
         self.grid.setSpacing(0)
 
+        # Ventes totales
+
         self.totalSellingsEuros = QtWidgets.QLabel("0")
         self.totalSellingsEuros.setAlignment(QtCore.Qt.AlignCenter)
         self.totalSellingsEuros.setFont(QtGui.QFont("Poppins SemiBold", 20))
@@ -546,12 +576,109 @@ class Program(QtWidgets.QWidget):
         self.canvas.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         self.canvas.setMinimumSize(500, 200)
         self.canvas.setMaximumSize(500, 200)
+        
 
+        self.list_category = list()
+        self.list_brand = list()
 
+        # Best product by number of sales by category
+        # Using a select menu to choose the category and a switch to choose between best and worst products
+
+        self.bestProductByCategory = QtWidgets.QWidget()
+
+        self.bestProductByCategoryLayout = QtWidgets.QVBoxLayout()
+        self.bestProductByCategoryLayout.setAlignment(QtCore.Qt.AlignCenter)
+
+        # Select menu
+        self.bestProductByCategorySelectMenu = QtWidgets.QComboBox()
+        self.bestProductByCategorySelectMenu.addItems(self.list_category)
+        self.bestProductByCategorySelectMenu.setStyleSheet("background-color: #F2F2F2; border: 1px solid #CBCBCB; border-radius: 5px; padding: 5px;")
+        self.bestProductByCategorySelectMenu.currentIndexChanged.connect(self.updateBestProductsByCategory)
+
+        # Text
+        self.bestProductByCategoryText = QtWidgets.QLabel("0")
+        self.bestProductByCategoryText.setAlignment(QtCore.Qt.AlignCenter)
+        self.bestProductByCategoryText.setFont(QtGui.QFont("Poppins SemiBold", 20))
+        self.bestProductByCategoryText.setStyleSheet("color: #000000;")
+        self.bestProductByCategoryTitle = QtWidgets.QLabel("Meilleur produit de la categorie")
+        self.bestProductByCategoryTitle.setFont(QtGui.QFont("Poppins Regular", 11))
+        self.bestProductByCategoryTitle.setStyleSheet("color: #CBCBCB;")
+        self.bestProductByCategoryTextLayout = QtWidgets.QVBoxLayout()
+        self.bestProductByCategoryTextLayout.setAlignment(QtCore.Qt.AlignCenter)
+        self.bestProductByCategoryTextLayout.addWidget(self.bestProductByCategoryText)
+        self.bestProductByCategoryTextLayout.addWidget(self.bestProductByCategoryTitle)
+        self.bestProductByCategoryTextLayout.setContentsMargins(0, 0, 0, 0)
+        self.bestProductByCategoryTextLayout.setSpacing(0)
+
+        # Switch
+        self.bestProductByCategorySwitch = QtWidgets.QPushButton("Meilleur")
+        self.bestProductByCategorySwitch.setCheckable(True)
+        self.bestProductByCategorySwitch.setStyleSheet("background-color: #F2F2F2; border: 1px solid #CBCBCB; border-radius: 5px; padding: 5px;")
+        self.bestProductByCategorySwitch.clicked.connect(self.switchBestProductByCategory)
+
+        # Add widgets to layout
+        self.bestProductByCategoryLayout.addWidget(self.bestProductByCategorySelectMenu)
+        self.bestProductByCategoryLayout.addStretch()
+        self.bestProductByCategoryLayout.addLayout(self.bestProductByCategoryTextLayout)
+        self.bestProductByCategoryLayout.addStretch()
+        self.bestProductByCategoryLayout.addWidget(self.bestProductByCategorySwitch)
+
+        self.bestProductByCategory.setLayout(self.bestProductByCategoryLayout)
+        self.bestProductByCategory.setStyleSheet("background-color: #ffffff;")
+
+        self.updateBestProductsByCategory()
+
+        # Best product by number of sales by brand
+        # Using a select menu to choose the brand and a switch to choose between best and worst products
+
+        self.bestProductByBrand = QtWidgets.QWidget()
+
+        self.bestProductByBrandLayout = QtWidgets.QVBoxLayout()
+        self.bestProductByBrandLayout.setAlignment(QtCore.Qt.AlignCenter)
+
+        # Select menu
+        self.bestProductByBrandSelectMenu = QtWidgets.QComboBox()
+        self.bestProductByBrandSelectMenu.addItems(self.list_brand)
+        self.bestProductByBrandSelectMenu.setStyleSheet("background-color: #F2F2F2; border: 1px solid #CBCBCB; border-radius: 5px; padding: 5px;")
+        self.bestProductByBrandSelectMenu.currentIndexChanged.connect(self.updateBestProductsByBrand)
+
+        # Text
+        self.bestProductByBrandText = QtWidgets.QLabel("0")
+        self.bestProductByBrandText.setAlignment(QtCore.Qt.AlignCenter)
+        self.bestProductByBrandText.setFont(QtGui.QFont("Poppins SemiBold", 20))
+        self.bestProductByBrandText.setStyleSheet("color: #000000;")
+        self.bestProductByBrandTitle = QtWidgets.QLabel("Meilleur produit de la marque")
+        self.bestProductByBrandTitle.setFont(QtGui.QFont("Poppins Regular", 11))
+        self.bestProductByBrandTitle.setStyleSheet("color: #CBCBCB;")
+        self.bestProductByBrandTextLayout = QtWidgets.QVBoxLayout()
+        self.bestProductByBrandTextLayout.setAlignment(QtCore.Qt.AlignCenter)
+        self.bestProductByBrandTextLayout.addWidget(self.bestProductByBrandText)
+        self.bestProductByBrandTextLayout.addWidget(self.bestProductByBrandTitle)
+        self.bestProductByBrandTextLayout.setContentsMargins(0, 0, 0, 0)
+        self.bestProductByBrandTextLayout.setSpacing(0)
+
+        # Switch
+        self.bestProductByBrandSwitch = QtWidgets.QPushButton("Meilleur")
+        self.bestProductByBrandSwitch.setCheckable(True)
+        self.bestProductByBrandSwitch.setStyleSheet("background-color: #F2F2F2; border: 1px solid #CBCBCB; border-radius: 5px; padding: 5px;")
+        self.bestProductByBrandSwitch.clicked.connect(self.switchBestProductByBrand)
+
+        # Add widgets to layout
+        self.bestProductByBrandLayout.addWidget(self.bestProductByBrandSelectMenu)
+        self.bestProductByBrandLayout.addStretch()
+        self.bestProductByBrandLayout.addLayout(self.bestProductByBrandTextLayout)
+        self.bestProductByBrandLayout.addStretch()
+        self.bestProductByBrandLayout.addWidget(self.bestProductByBrandSwitch)
+
+        self.bestProductByBrand.setLayout(self.bestProductByBrandLayout)
+        self.bestProductByBrand.setStyleSheet("background-color: #eeeeff;")
+
+        self.updateBestProductsByBrand()
+        
 
         self.grid.addWidget(self.totalSellingsEurosWidget, 0, 0, 2, 1)
-        self.grid.addWidget(Color('blue'), 2, 0, 2, 1)
-        self.grid.addWidget(Color('green'), 4, 0, 2, 1)
+        self.grid.addWidget(self.bestProductByCategory, 2, 0, 2, 1)
+        self.grid.addWidget(self.bestProductByBrand, 4, 0, 2, 1)
 
         self.grid.addWidget(self.canvas, 0, 2, 3, 2)
         self.grid.addWidget(Color('purple'), 3, 2, 3, 2)
@@ -650,7 +777,74 @@ class Program(QtWidgets.QWidget):
                 self.productsPerCategory[self.categories.index(product._category)] += 1
         self.ax.bar(self.categories, self.productsPerCategory, color="#000000")
         self.canvas.draw()
-            
+
+        self.updateBestProductsByCategory()
+        self.updateBestProductsByBrand()
+
+    def updateBestProductsByCategory(self):
+        # TODO: Fix recursion error
+        self.list_category = list()
+        self.list_brand = list()
+        for product in list_products:
+            if product._category not in self.list_category:
+                self.list_category.append(product._category)
+            if product._brand not in self.list_brand:
+                self.list_brand.append(product._brand)
+
+        self.bestProductByCategorySelectMenu.clear()
+        self.bestProductByCategorySelectMenu.addItems(sorted(self.list_category))
+
+        # Get the category selected
+        self.categorySelected = self.bestProductByCategorySelectMenu.currentText()
+
+        # Get the best product of the category selected
+        self.bestProduct = getProduct(self.bestProductByCategorySwitch.isChecked(), self.categorySelected, None)
+
+        if(self.bestProduct != None):
+            # Update the best product label
+            self.bestProductByCategoryText.setText(self.bestProduct._name)
+
+    def switchBestProductByCategory(self):
+        if self.bestProductByCategorySwitch.isChecked():
+            self.bestProductByCategorySwitch.setText("Pire")
+            self.bestProductByCategoryTitle.setText("Pire produit de la catégorie")
+        else:
+            self.bestProductByCategorySwitch.setText("Meilleur")
+            self.bestProductByCategoryTitle.setText("Meilleur produit de la catégorie")
+        self.updateBestProductsByCategory()
+
+    def updateBestProductsByBrand(self):
+        self.list_category = list()
+        self.list_brand = list()
+        for product in list_products:
+            if product._category not in self.list_category:
+                self.list_category.append(product._category)
+            if product._brand not in self.list_brand:
+                self.list_brand.append(product._brand)
+
+        self.bestProductByBrandSelectMenu.clear()
+        self.bestProductByBrandSelectMenu.addItems(sorted(self.list_brand))
+
+        # Get the category selected
+        self.brandSelected = self.bestProductByBrandSelectMenu.currentText()
+
+        # Get the best product of the category selected
+        self.bestProduct = getProduct(self.bestProductByBrandSwitch.isChecked(), None, self.brandSelected)
+
+        if(self.bestProduct != None):
+            # Update the best product label
+            self.bestProductByBrandText.setText(self.bestProduct._name)
+
+    def switchBestProductByBrand(self):
+        if self.bestProductByBrandSwitch.isChecked():
+            self.bestProductByBrandSwitch.setText("Pire")
+            self.bestProductByBrandTitle.setText("Pire produit de la marque")
+        else:
+            self.bestProductByBrandSwitch.setText("Meilleur")
+            self.bestProductByBrandTitle.setText("Meilleur produit de la marque")
+        self.updateBestProductsByBrand()
+
+
     def paintEvent(self, event):
         # get current window size
         s = self.size()

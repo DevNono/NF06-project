@@ -11,6 +11,8 @@ from matplotlib.figure import Figure
 list_products = list()
 filters = { "category": list(), "brand": list(), "year": 0 }
 order_by = { "type": "nb_sold", "order": "desc" }
+to_export = list()
+trucksize = 0
 
 class Product(object):
     _uid = int()
@@ -74,6 +76,35 @@ def getTotalSellingsEuros():
     for product in list_products:
         total += product._nb_sold * product._price
     return total
+
+def getProduct(is_best, category = None, brand = None):
+    if(category == None and brand == None):
+        return None
+    if(brand == None):
+        products = list(filter(lambda x: x._category == category, list_products))
+        if(is_best):
+            products.sort(key=lambda x: x._nb_sold, reverse=False)
+        else:
+            products.sort(key=lambda x: x._nb_sold, reverse=True)
+        
+        if(len(products) > 0):
+            return products[0]
+        else:
+            return None
+    elif(category == None):
+        products = list(filter(lambda x: x._brand == brand, list_products))
+        if(is_best):
+            products.sort(key=lambda x: x._nb_sold, reverse=False)
+        else:
+            products.sort(key=lambda x: x._nb_sold, reverse=True)
+
+        if(len(products) > 0):
+            return products[0]
+        else:
+            return None
+    else:
+        return None
+
 class OrderByDialog(QtWidgets.QDialog):
     def __init__(self, parent=None):
         super(OrderByDialog, self).__init__(parent)
@@ -126,6 +157,146 @@ class OrderByDialog(QtWidgets.QDialog):
 
         parent.updateProductList()
         self.close()
+class AddProductDialog(QtWidgets.QDialog):
+    def __init__(self, parent=None):
+        super(AddProductDialog, self).__init__(parent)
+        self.setWindowTitle("Ajouter un produit")
+
+        self.layout = QtWidgets.QVBoxLayout(self)
+
+        self.label = QtWidgets.QLabel("Ajouter un produit")
+        self.layout.addWidget(self.label)
+
+        self.name = QtWidgets.QLineEdit()
+        self.name.setPlaceholderText("Nom")
+        self.layout.addWidget(self.name)
+
+        self.price = QtWidgets.QLineEdit()
+        self.price.setPlaceholderText("Prix")
+        self.layout.addWidget(self.price)
+
+        self.weight = QtWidgets.QLineEdit()
+        self.weight.setPlaceholderText("Poids")
+        self.layout.addWidget(self.weight)
+
+        self.category = QtWidgets.QLineEdit()
+        self.category.setPlaceholderText("Catégorie")
+        self.layout.addWidget(self.category)
+
+        self.brand = QtWidgets.QLineEdit()
+        self.brand.setPlaceholderText("Marque")
+        self.layout.addWidget(self.brand)
+
+        self.year = QtWidgets.QLineEdit()
+        self.year.setPlaceholderText("Année")
+        self.layout.addWidget(self.year)
+
+        self.stock = QtWidgets.QLineEdit()
+        self.stock.setPlaceholderText("Stock")
+        self.layout.addWidget(self.stock)
+
+        self.button = QtWidgets.QPushButton("OK")
+        self.button.clicked.connect(lambda: self.onOK(parent))
+        self.layout.addWidget(self.button)
+
+    def onOK(self, parent):
+        global list_products
+        uid = len(list_products) + 1
+        name = self.name.text()
+        price = float(self.price.text())
+        weight = float(self.weight.text())
+        category = self.category.text()
+        brand = self.brand.text()
+        year = int(self.year.text())
+        stock = int(self.stock.text())
+        review = 0
+        nb_sold = 0
+        product = Product(uid, name, price, weight, category, brand, year, stock, review, nb_sold)
+        list_products.append(product)
+
+        parent.updateProductList()
+        self.close()
+class ExportProductsDialog(QtWidgets.QDialog):
+    def __init__(self, parent=None):
+        super(ExportProductsDialog, self).__init__(parent)
+        self.setWindowTitle("Exporter des produits")
+
+        self.layout = QtWidgets.QVBoxLayout(self)
+
+        self.label = QtWidgets.QLabel("Exporter des produits")
+        self.layout.addWidget(self.label)
+
+        self.index = 0
+
+        if(self.index <= len(list_products) - 1):
+            self.product = list_products[self.index]
+            self.name = QtWidgets.QLabel(self.product._name)
+            self.layout.addWidget(self.name)
+
+            self.brand = QtWidgets.QLabel(self.product._brand)
+            self.layout.addWidget(self.brand)
+
+            self.stock = QtWidgets.QLabel(str(self.product._stock))
+            self.layout.addWidget(self.stock)
+
+            self.category = QtWidgets.QLabel(self.product._category)
+            self.layout.addWidget(self.category)
+
+            self.quantity = QtWidgets.QSpinBox()
+            self.quantity.setMinimum(0)
+            self.quantity.setMaximum(self.product._stock)
+            self.quantity.setValue(0)
+            self.layout.addWidget(self.quantity)
+
+        self.button = QtWidgets.QPushButton("OK")
+        self.button.clicked.connect(lambda: self.onOK(parent))
+        self.layout.addWidget(self.button)
+
+    def onOK(self, parent):
+        if(self.index < len(list_products) - 1):
+            to_export.append({
+                self.product._name,
+                self.product._weight,
+                self.product._price,
+                self.quantity.value()
+            })
+            self.index += 1
+            self.product = list_products[self.index]
+            self.name.setText(self.product._name)
+            self.brand.setText(self.product._brand)
+            self.stock.setText(str(self.product._stock))
+            self.category.setText(self.product._category)
+            self.quantity.setMinimum(0)
+            self.quantity.setMaximum(self.product._stock)
+            self.quantity.setValue(0)
+        elif(self.index == len(list_products) - 1):
+            to_export.append({
+                self.product._name,
+                self.product._weight,
+                self.product._price,
+                self.quantity.value()
+            })
+            self.index += 1
+
+            self.layout.removeWidget(self.name)
+            self.layout.removeWidget(self.brand)
+            self.layout.removeWidget(self.stock)
+            self.layout.removeWidget(self.category)
+            self.layout.removeWidget(self.quantity)
+
+            self.name.deleteLater()
+            self.brand.deleteLater()
+            self.stock.deleteLater()
+            self.category.deleteLater()
+            self.quantity.deleteLater()
+
+            self.truckWeight = QtWidgets.QLineEdit()
+            self.truckWeight.setPlaceholderText("Poids du camion")
+            self.layout.addWidget(self.truckWeight)
+        else:
+            trucksize = float(self.truckWeight.text())
+            # TODO: Add export function (cf. Gaudry)
+            self.close()
 class FiltersDialog(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super().__init__()
@@ -143,7 +314,7 @@ class FiltersDialog(QtWidgets.QWidget):
 
         self.filters_category = QtWidgets.QGroupBox("Category")
         self.layout_filters_category = QtWidgets.QVBoxLayout()
-        self.filters_category.setLayout( self.layout_filters_category)
+        self.filters_category.setLayout(self.layout_filters_category)
         self.filters_category.setCheckable(True)
         self.filters_category.setChecked(False)
         if(len(filters["category"]) > 0):
@@ -278,6 +449,20 @@ class Program(QtWidgets.QWidget):
         self.topRightLayout.setContentsMargins(0, 0, 0, 0)
         self.topRightLayout.setSpacing(10)
         self.topRightLayout.addStretch()
+
+        self.Button = QtWidgets.QPushButton()
+        self.Button.setIcon(QtGui.QIcon("assets/export.svg"))
+        self.Button.setToolTip("Exporter des produits")
+        self.Button.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
+        self.Button.clicked.connect(self.exportProducts)
+        self.topRightLayout.addWidget(self.Button)
+
+        self.Button = QtWidgets.QPushButton()
+        self.Button.setIcon(QtGui.QIcon("assets/add.svg"))
+        self.Button.setToolTip("Ajouter un produit")
+        self.Button.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
+        self.Button.clicked.connect(self.addProduct)
+        self.topRightLayout.addWidget(self.Button)
         
         self.Button = QtWidgets.QPushButton()
         self.Button.setIcon(QtGui.QIcon("assets/export.svg"))
@@ -296,7 +481,7 @@ class Program(QtWidgets.QWidget):
         self.topLayout.addLayout(self.topRightLayout)
 
         self.midLayout = QtWidgets.QHBoxLayout()
-        self.changePages = QtWidgets.QPushButton("Produits")
+        self.changePages = QtWidgets.QPushButton("Statistiques")
         self.changePages.clicked.connect(self.changePage)
         self.midLayout.addWidget(self.changePages)
         self.orderby = QtWidgets.QPushButton("Trier par")
@@ -339,6 +524,8 @@ class Program(QtWidgets.QWidget):
         self.grid = QtWidgets.QGridLayout()
         self.grid.setContentsMargins(0, 0, 0, 0)
         self.grid.setSpacing(0)
+
+        # Ventes totales
 
         self.totalSellingsEuros = QtWidgets.QLabel("0")
         self.totalSellingsEuros.setAlignment(QtCore.Qt.AlignCenter)
@@ -389,12 +576,109 @@ class Program(QtWidgets.QWidget):
         self.canvas.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         self.canvas.setMinimumSize(500, 200)
         self.canvas.setMaximumSize(500, 200)
+        
 
+        self.list_category = list()
+        self.list_brand = list()
 
+        # Best product by number of sales by category
+        # Using a select menu to choose the category and a switch to choose between best and worst products
+
+        self.bestProductByCategory = QtWidgets.QWidget()
+
+        self.bestProductByCategoryLayout = QtWidgets.QVBoxLayout()
+        self.bestProductByCategoryLayout.setAlignment(QtCore.Qt.AlignCenter)
+
+        # Select menu
+        self.bestProductByCategorySelectMenu = QtWidgets.QComboBox()
+        self.bestProductByCategorySelectMenu.addItems(self.list_category)
+        self.bestProductByCategorySelectMenu.setStyleSheet("background-color: #F2F2F2; border: 1px solid #CBCBCB; border-radius: 5px; padding: 5px;")
+        self.bestProductByCategorySelectMenu.currentIndexChanged.connect(self.updateBestProductsByCategory)
+
+        # Text
+        self.bestProductByCategoryText = QtWidgets.QLabel("0")
+        self.bestProductByCategoryText.setAlignment(QtCore.Qt.AlignCenter)
+        self.bestProductByCategoryText.setFont(QtGui.QFont("Poppins SemiBold", 20))
+        self.bestProductByCategoryText.setStyleSheet("color: #000000;")
+        self.bestProductByCategoryTitle = QtWidgets.QLabel("Meilleur produit de la categorie")
+        self.bestProductByCategoryTitle.setFont(QtGui.QFont("Poppins Regular", 11))
+        self.bestProductByCategoryTitle.setStyleSheet("color: #CBCBCB;")
+        self.bestProductByCategoryTextLayout = QtWidgets.QVBoxLayout()
+        self.bestProductByCategoryTextLayout.setAlignment(QtCore.Qt.AlignCenter)
+        self.bestProductByCategoryTextLayout.addWidget(self.bestProductByCategoryText)
+        self.bestProductByCategoryTextLayout.addWidget(self.bestProductByCategoryTitle)
+        self.bestProductByCategoryTextLayout.setContentsMargins(0, 0, 0, 0)
+        self.bestProductByCategoryTextLayout.setSpacing(0)
+
+        # Switch
+        self.bestProductByCategorySwitch = QtWidgets.QPushButton("Meilleur")
+        self.bestProductByCategorySwitch.setCheckable(True)
+        self.bestProductByCategorySwitch.setStyleSheet("background-color: #F2F2F2; border: 1px solid #CBCBCB; border-radius: 5px; padding: 5px;")
+        self.bestProductByCategorySwitch.clicked.connect(self.switchBestProductByCategory)
+
+        # Add widgets to layout
+        self.bestProductByCategoryLayout.addWidget(self.bestProductByCategorySelectMenu)
+        self.bestProductByCategoryLayout.addStretch()
+        self.bestProductByCategoryLayout.addLayout(self.bestProductByCategoryTextLayout)
+        self.bestProductByCategoryLayout.addStretch()
+        self.bestProductByCategoryLayout.addWidget(self.bestProductByCategorySwitch)
+
+        self.bestProductByCategory.setLayout(self.bestProductByCategoryLayout)
+        self.bestProductByCategory.setStyleSheet("background-color: #ffffff;")
+
+        self.updateBestProductsByCategory()
+
+        # Best product by number of sales by brand
+        # Using a select menu to choose the brand and a switch to choose between best and worst products
+
+        self.bestProductByBrand = QtWidgets.QWidget()
+
+        self.bestProductByBrandLayout = QtWidgets.QVBoxLayout()
+        self.bestProductByBrandLayout.setAlignment(QtCore.Qt.AlignCenter)
+
+        # Select menu
+        self.bestProductByBrandSelectMenu = QtWidgets.QComboBox()
+        self.bestProductByBrandSelectMenu.addItems(self.list_brand)
+        self.bestProductByBrandSelectMenu.setStyleSheet("background-color: #F2F2F2; border: 1px solid #CBCBCB; border-radius: 5px; padding: 5px;")
+        self.bestProductByBrandSelectMenu.currentIndexChanged.connect(self.updateBestProductsByBrand)
+
+        # Text
+        self.bestProductByBrandText = QtWidgets.QLabel("0")
+        self.bestProductByBrandText.setAlignment(QtCore.Qt.AlignCenter)
+        self.bestProductByBrandText.setFont(QtGui.QFont("Poppins SemiBold", 20))
+        self.bestProductByBrandText.setStyleSheet("color: #000000;")
+        self.bestProductByBrandTitle = QtWidgets.QLabel("Meilleur produit de la marque")
+        self.bestProductByBrandTitle.setFont(QtGui.QFont("Poppins Regular", 11))
+        self.bestProductByBrandTitle.setStyleSheet("color: #CBCBCB;")
+        self.bestProductByBrandTextLayout = QtWidgets.QVBoxLayout()
+        self.bestProductByBrandTextLayout.setAlignment(QtCore.Qt.AlignCenter)
+        self.bestProductByBrandTextLayout.addWidget(self.bestProductByBrandText)
+        self.bestProductByBrandTextLayout.addWidget(self.bestProductByBrandTitle)
+        self.bestProductByBrandTextLayout.setContentsMargins(0, 0, 0, 0)
+        self.bestProductByBrandTextLayout.setSpacing(0)
+
+        # Switch
+        self.bestProductByBrandSwitch = QtWidgets.QPushButton("Meilleur")
+        self.bestProductByBrandSwitch.setCheckable(True)
+        self.bestProductByBrandSwitch.setStyleSheet("background-color: #F2F2F2; border: 1px solid #CBCBCB; border-radius: 5px; padding: 5px;")
+        self.bestProductByBrandSwitch.clicked.connect(self.switchBestProductByBrand)
+
+        # Add widgets to layout
+        self.bestProductByBrandLayout.addWidget(self.bestProductByBrandSelectMenu)
+        self.bestProductByBrandLayout.addStretch()
+        self.bestProductByBrandLayout.addLayout(self.bestProductByBrandTextLayout)
+        self.bestProductByBrandLayout.addStretch()
+        self.bestProductByBrandLayout.addWidget(self.bestProductByBrandSwitch)
+
+        self.bestProductByBrand.setLayout(self.bestProductByBrandLayout)
+        self.bestProductByBrand.setStyleSheet("background-color: #eeeeff;")
+
+        self.updateBestProductsByBrand()
+        
 
         self.grid.addWidget(self.totalSellingsEurosWidget, 0, 0, 2, 1)
-        self.grid.addWidget(Color('blue'), 2, 0, 2, 1)
-        self.grid.addWidget(Color('green'), 4, 0, 2, 1)
+        self.grid.addWidget(self.bestProductByCategory, 2, 0, 2, 1)
+        self.grid.addWidget(self.bestProductByBrand, 4, 0, 2, 1)
 
         self.grid.addWidget(self.canvas, 0, 2, 3, 2)
         self.grid.addWidget(Color('purple'), 3, 2, 3, 2)
@@ -414,6 +698,14 @@ class Program(QtWidgets.QWidget):
             _style = f.read()
             app.setStyleSheet(_style)
     
+    def addProduct(self):
+        self.addProductDialog = AddProductDialog(self)
+        self.addProductDialog.show()
+    
+    def exportProducts(self):
+        self.exportProductsDialog = ExportProductsDialog(self)
+        self.exportProductsDialog.show()
+
     def showOrderBy(self):
         self.orderBy = OrderByDialog(self)
         self.orderBy.show()
@@ -425,8 +717,10 @@ class Program(QtWidgets.QWidget):
     def changePage(self):
         if self.bottomLayout.currentIndex() == 0:
             self.bottomLayout.setCurrentIndex(1)
+            self.changePages.setText("Produits")
         else:
             self.bottomLayout.setCurrentIndex(0)
+            self.changePages.setText("Statistiques")
         
     def setData(self, table): 
         for i in range(len(table.data)):
@@ -483,7 +777,74 @@ class Program(QtWidgets.QWidget):
                 self.productsPerCategory[self.categories.index(product._category)] += 1
         self.ax.bar(self.categories, self.productsPerCategory, color="#000000")
         self.canvas.draw()
-            
+
+        self.updateBestProductsByCategory()
+        self.updateBestProductsByBrand()
+
+    def updateBestProductsByCategory(self):
+        # TODO: Fix recursion error
+        self.list_category = list()
+        self.list_brand = list()
+        for product in list_products:
+            if product._category not in self.list_category:
+                self.list_category.append(product._category)
+            if product._brand not in self.list_brand:
+                self.list_brand.append(product._brand)
+
+        self.bestProductByCategorySelectMenu.clear()
+        self.bestProductByCategorySelectMenu.addItems(sorted(self.list_category))
+
+        # Get the category selected
+        self.categorySelected = self.bestProductByCategorySelectMenu.currentText()
+
+        # Get the best product of the category selected
+        self.bestProduct = getProduct(self.bestProductByCategorySwitch.isChecked(), self.categorySelected, None)
+
+        if(self.bestProduct != None):
+            # Update the best product label
+            self.bestProductByCategoryText.setText(self.bestProduct._name)
+
+    def switchBestProductByCategory(self):
+        if self.bestProductByCategorySwitch.isChecked():
+            self.bestProductByCategorySwitch.setText("Pire")
+            self.bestProductByCategoryTitle.setText("Pire produit de la catégorie")
+        else:
+            self.bestProductByCategorySwitch.setText("Meilleur")
+            self.bestProductByCategoryTitle.setText("Meilleur produit de la catégorie")
+        self.updateBestProductsByCategory()
+
+    def updateBestProductsByBrand(self):
+        self.list_category = list()
+        self.list_brand = list()
+        for product in list_products:
+            if product._category not in self.list_category:
+                self.list_category.append(product._category)
+            if product._brand not in self.list_brand:
+                self.list_brand.append(product._brand)
+
+        self.bestProductByBrandSelectMenu.clear()
+        self.bestProductByBrandSelectMenu.addItems(sorted(self.list_brand))
+
+        # Get the category selected
+        self.brandSelected = self.bestProductByBrandSelectMenu.currentText()
+
+        # Get the best product of the category selected
+        self.bestProduct = getProduct(self.bestProductByBrandSwitch.isChecked(), None, self.brandSelected)
+
+        if(self.bestProduct != None):
+            # Update the best product label
+            self.bestProductByBrandText.setText(self.bestProduct._name)
+
+    def switchBestProductByBrand(self):
+        if self.bestProductByBrandSwitch.isChecked():
+            self.bestProductByBrandSwitch.setText("Pire")
+            self.bestProductByBrandTitle.setText("Pire produit de la marque")
+        else:
+            self.bestProductByBrandSwitch.setText("Meilleur")
+            self.bestProductByBrandTitle.setText("Meilleur produit de la marque")
+        self.updateBestProductsByBrand()
+
+
     def paintEvent(self, event):
         # get current window size
         s = self.size()

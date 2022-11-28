@@ -6,10 +6,10 @@ typedef struct {
     int poids;
     int val;
     int nombre;
-} item_t;
+} item_t;  // Structure d'un item
 
-item_t items[] = {
-    {"map",                      9,   150,   1},
+item_t items[] = {                                              // Liste d'items pour le théorème du sac à dos*
+    {"map",                      9,   150,   1},                // De formes ("Nom", Poids, valeur, nombre (= quantité))
     {"compass",                 13,    35,   1},
     {"water",                  153,   200,   2},
     {"sandwich",                50,    60,   2},
@@ -35,22 +35,22 @@ item_t items[] = {
 
 int n = sizeof (items) / sizeof (item_t);
 
-int *knapsack (int w) {
-    int i, j, k, v, *mm, **m, *s;
+int *knapsack (int w) { // On réalise le théroème du sac à dos
+    int i, j, k, v, *mm, **m, *s; // On déclare les variables
     mm = calloc((n + 1) * (w + 1), sizeof (int));
     m = malloc((n + 1) * sizeof (int *));
     m[0] = mm;
-    for (i = 1; i <= n; i++) {
+    for (i = 1; i <= n; i++) {  // On parcourt la liste d'items
         m[i] = &mm[i * (w + 1)];
         for (j = 0; j <= w; j++) {
             m[i][j] = m[i - 1][j];
             for (k = 1; k <= items[i - 1].nombre; k++) {
-                if (k * items[i - 1].poids > j) {
+                if (k * items[i - 1].poids > j) { // Si le poids de l'item est supérieur au poids du sac
                     break;
                 }
-                v = m[i - 1][j - k * items[i - 1].poids] + k * items[i - 1].val;
+                v = m[i - 1][j - k * items[i - 1].poids] + k * items[i - 1].val; // On calcule la valeur de l'item
                 if (v > m[i][j]) {
-                    m[i][j] = v;
+                    m[i][j] = v; // On met à jour la valeur de l'item
                 }
             }
         }
@@ -60,34 +60,27 @@ int *knapsack (int w) {
         int v = m[i][j];
         for (k = 0; v != m[i - 1][j] + k * items[i - 1].val; k++) {
             s[i - 1]++;
-            j -= items[i - 1].poids;
+            j -= items[i - 1].poids; // On met à jour le poids du sac
         }
     }
     free(mm);
-    free(m);
+    free(m);  // On libère la mémoire
     return s;
 }
 
 int main () {
-    int C;
-    printf("Quelle est la taille de votre camion ? \n");
-    scanf("%d", &C);
+    int C = 400;
     int *s;
-    s = knapsack(C);
+    s = knapsack(C); // On réalise le théorème du sac à dos
     int i, tc = 0, tw = 0, tv = 0;
     for (i = 0; i < n; i++) {
         if (s[i]) {
-            printf("%-22s %5d %5d %5d\n", items[i].name, s[i], s[i] * items[i].poids, s[i] * items[i].val);
+            printf("%-22s %5d %5d %5d\n", items[i].name, s[i], s[i] * items[i].poids, s[i] * items[i].val); // On affiche les items choisis
             tc += s[i];
             tw += s[i] * items[i].poids;
             tv += s[i] * items[i].val;
         }
     }
-    printf("%-22s %5d %5d %5d\n", "nombre, poids, val:", tc, tw, tv);
+    printf("%-22s %5d %5d %5d\n", "nombre, poids, val:", tc, tw, tv); // On affiche le nombre, le poids et la valeur totale
     return 0;
-}
-
-int Add(int a, int b)
-{
-    return a + b;
 }

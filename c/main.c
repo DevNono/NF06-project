@@ -33,9 +33,10 @@ item_t items[] = {                                              // Liste d'items
     {"book",                    30,    10,   2},
 };
 
-int n = sizeof (items) / sizeof (item_t);
 
+int n = sizeof (items) / sizeof (item_t);
 int *knapsack (int w) { // On réalise le théroème du sac à dos
+    
     int i, j, k, v, *mm, **m, *s; // On déclare les variables
     mm = calloc((n + 1) * (w + 1), sizeof (int));
     m = malloc((n + 1) * sizeof (int *));

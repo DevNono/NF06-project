@@ -74,23 +74,26 @@ int *knapsack (int w, item_t* items) { // On réalise le théroème du sac à do
 }
 
 
-int main (int number,char* name_item[number],int* poids_item_list[number],int* val_item[number],int* nombre_item[number]) {
+int main (int number,int* name_item[number],int* poids_item_list[number],int* val_item[number],int* nombre_item[number]) {
+    char UID[100];
     printf("Test\n");
     //On transforme les arguments en liste d'items
-    printf("%d nombre \n ",number);
-    printf("%s nom \n ",name_item[1]);
-    printf("%d poids \n ",poids_item_list[0]);
+    // printf("%d nombre \n ",number);
+    printf("%d nom \n ",name_item[0]);
+     printf("%d val \n ",name_item[1]);
+    // printf("%d poids \n ",poids_item_list[0]);
     item_t items[number];
     for (int i=0;i<number;i++){
-        items[i].name=name_item[i];
+        sprintf(UID, "%d", name_item[i] );
+        items[i].name= UID;
         items[i].poids=poids_item_list[i];  
         items[i].val=val_item[i];
         items[i].nombre=nombre_item[i];
+        printf("%s nom \n ",items[i].name);
     }
 
-    printf("%d  %d", items[0].poids,items[0].val);
     int C = 400;
-    int n = 2;
+    int n = 3;
     int *s;
     s = knapsack(C, items); // On réalise le théorème du sac à dos
     int i, tc = 0, tw = 0, tv = 0;

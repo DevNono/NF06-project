@@ -75,8 +75,11 @@ int *knapsack (int w, item_t* items) { // On réalise le théroème du sac à do
 
 
 int main (int number,char* name_item[number],int* poids_item_list[number],int* val_item[number],int* nombre_item[number]) {
+    printf("Test\n");
     //On transforme les arguments en liste d'items
-    printf("%d ",number,"%c ",name_item[0],"%d \t",poids_item_list[0],"%d",val_item[0],"%d",nombre_item[0]);
+    printf("%d nombre \n ",number);
+    printf("%s nom \n ",name_item[1]);
+    printf("%d poids \n ",poids_item_list[0]);
     item_t items[number];
     for (int i=0;i<number;i++){
         items[i].name=name_item[i];
@@ -101,8 +104,4 @@ int main (int number,char* name_item[number],int* poids_item_list[number],int* v
     }
     printf("%-22s %5d %5d %5d\n", "nombre, poids, val:", tc, tw, tv); // On affiche le nombre, le poids et la valeur totale
     return 0;
-}
-
-int add_int (int a, int b) {
-    return a + b;
 }

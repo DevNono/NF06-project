@@ -105,6 +105,13 @@ def getProduct(is_best, category = None, brand = None):
     else:
         return None
 
+def getTotalSellingsByBrand(brand):
+    total = 0
+    for product in list_products:
+        if product._brand == brand:
+            total += product._nb_sold * product._price
+    return total
+
 class OrderByDialog(QtWidgets.QDialog):
     def __init__(self, parent=None):
         super(OrderByDialog, self).__init__(parent)
@@ -283,6 +290,7 @@ class ExportProductsDialog(QtWidgets.QDialog):
             self.layout.removeWidget(self.stock)
             self.layout.removeWidget(self.category)
             self.layout.removeWidget(self.quantity)
+            self.layout.removeWidget(self.button)
 
             self.name.deleteLater()
             self.brand.deleteLater()
@@ -293,8 +301,13 @@ class ExportProductsDialog(QtWidgets.QDialog):
             self.truckWeight = QtWidgets.QLineEdit()
             self.truckWeight.setPlaceholderText("Poids du camion")
             self.layout.addWidget(self.truckWeight)
+            self.layout.addWidget(self.button)
         else:
+            if(self.truckWeight.text() == ""):
+                return
             trucksize = float(self.truckWeight.text())
+            print(trucksize)
+            print(to_export)
             # TODO: Add export function (cf. Gaudry)
             self.close()
 class FiltersDialog(QtWidgets.QWidget):
@@ -390,15 +403,6 @@ class FiltersDialog(QtWidgets.QWidget):
 
     def on_cancel_button_clicked(self):
         self.close()
-class Color(QtWidgets.QWidget):
-
-    def __init__(self, color):
-        super(Color, self).__init__()
-        self.setAutoFillBackground(True)
-
-        palette = self.palette()
-        palette.setColor(QtGui.QPalette.Window, QtGui.QColor(color))
-        self.setPalette(palette)
 class Program(QtWidgets.QWidget):
     def __init__(self):
         super().__init__()
@@ -451,8 +455,8 @@ class Program(QtWidgets.QWidget):
         self.topRightLayout.addStretch()
 
         self.Button = QtWidgets.QPushButton()
-        self.Button.setIcon(QtGui.QIcon("assets/export.svg"))
-        self.Button.setToolTip("Exporter des produits")
+        self.Button.setIcon(QtGui.QIcon("assets/deliver.svg"))
+        self.Button.setToolTip("Exporter des produits (livraison)")
         self.Button.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
         self.Button.clicked.connect(self.exportProducts)
         self.topRightLayout.addWidget(self.Button)
@@ -546,11 +550,16 @@ class Program(QtWidgets.QWidget):
         self.totalSellingsEurosWidget.setContentsMargins(0, 0, 0, 0)
 
         # Graph of number of products per category using matplotlib
+        self.graphLayout = QtWidgets.QVBoxLayout()
+        self.graphLayout.setAlignment(QtCore.Qt.AlignCenter)
+        self.graphLayout.setContentsMargins(0, 0, 0, 0)
+        self.graphLayout.setSpacing(0)
+        self.graphWidget = QtWidgets.QWidget()
         self.figure = Figure()
         self.canvas = FigureCanvas(self.figure)
         self.ax = self.figure.add_subplot(111)
         self.ax.set_title("Nombre de produits par catégorie")
-        self.ax.set_xlabel("Catégories")
+        self.ax.set_xlabel("")
         self.ax.set_ylabel("Nombre de produits")
         self.ax.set_xticks([])
         self.ax.set_yticks([])
@@ -574,12 +583,40 @@ class Program(QtWidgets.QWidget):
         self.canvas.setContentsMargins(0, 0, 0, 0)
         self.canvas.setStyleSheet("background-color: #F2F2F2;")
         self.canvas.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
-        self.canvas.setMinimumSize(500, 200)
-        self.canvas.setMaximumSize(500, 200)
+
+        self.graphLayout.addWidget(self.canvas)
+        self.graphWidget.setLayout(self.graphLayout)
         
 
         self.list_category = list()
         self.list_brand = list()
+
+        # Graph of total sales per brand using matplotlib and a select menu to choose the category
+        self.totalSellingsByBrandLayout = QtWidgets.QVBoxLayout()
+        self.totalSellingsByBrandLayout.setAlignment(QtCore.Qt.AlignCenter)
+        self.totalSellingsByBrandLayout.setContentsMargins(0, 0, 0, 0)
+        self.totalSellingsByBrandLayout.setSpacing(0)
+        self.totalSellingsByBrandWidget = QtWidgets.QWidget()
+        self.figure2 = Figure()
+        self.canvas2 = FigureCanvas(self.figure2)
+        self.ax2 = self.figure2.add_subplot(111)
+        self.ax2.set_title("Ventes totales par marque")
+        self.ax2.set_xlabel("")
+        self.ax2.set_ylabel("Ventes totales (€)")
+        self.ax2.set_xticks([])
+        self.ax2.set_yticks([])
+        self.ax2.set_facecolor("#F2F2F2")
+        self.ax2.spines["top"].set_visible(False)
+        self.ax2.spines["right"].set_visible(False)
+        self.ax2.spines["bottom"].set_visible(False)
+        self.ax2.spines["left"].set_visible(False)
+        self.canvas2.draw()
+        self.canvas2.setContentsMargins(0, 0, 0, 0)
+        self.canvas2.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        self.totalSellingsByBrandLayout.addWidget(self.canvas2)
+        
+        self.totalSellingsByBrandWidget.setLayout(self.totalSellingsByBrandLayout)
+
 
         # Best product by number of sales by category
         # Using a select menu to choose the category and a switch to choose between best and worst products
@@ -680,8 +717,8 @@ class Program(QtWidgets.QWidget):
         self.grid.addWidget(self.bestProductByCategory, 2, 0, 2, 1)
         self.grid.addWidget(self.bestProductByBrand, 4, 0, 2, 1)
 
-        self.grid.addWidget(self.canvas, 0, 2, 3, 2)
-        self.grid.addWidget(Color('purple'), 3, 2, 3, 2)
+        self.grid.addWidget(self.graphWidget, 0, 2, 3, 2)
+        self.grid.addWidget(self.totalSellingsByBrandWidget, 3, 2, 3, 2)
 
         self.gridWidget = QtWidgets.QWidget()
         self.gridWidget.setLayout(self.grid)
@@ -757,16 +794,10 @@ class Program(QtWidgets.QWidget):
         self.totalSellingsEuros.setText(str(getTotalSellingsEuros()))
         self.canvas.figure.clear()
         self.ax = self.canvas.figure.add_subplot(111)
-        self.ax.set_title("Nombre de produits par catégorie")
-        self.ax.set_xlabel("Catégories")
-        self.ax.set_ylabel("Nombre de produits")
-        self.ax.set_xticks([])
-        self.ax.set_yticks([])
-        self.ax.set_facecolor("#F2F2F2")
-        self.ax.spines["top"].set_visible(False)
-        self.ax.spines["right"].set_visible(False)
-        self.ax.spines["bottom"].set_visible(False)
-        self.ax.spines["left"].set_visible(False)
+        self.ax.set_title("Ventes par catégorie")
+        self.ax.set_xlabel("")
+        self.ax.set_ylabel("Ventes")
+
         self.categories = []
         self.productsPerCategory = []
         for product in list_products:
@@ -776,13 +807,11 @@ class Program(QtWidgets.QWidget):
             else:
                 self.productsPerCategory[self.categories.index(product._category)] += 1
         self.ax.bar(self.categories, self.productsPerCategory, color="#000000")
+        # set random colors
+        for i in range(len(self.ax.patches)):
+            self.ax.patches[i].set_color("#%06x" % random.randint(0, 0xFFFFFF))
         self.canvas.draw()
 
-        self.updateBestProductsByCategory()
-        self.updateBestProductsByBrand()
-
-    def updateBestProductsByCategory(self):
-        # TODO: Fix recursion error
         self.list_category = list()
         self.list_brand = list()
         for product in list_products:
@@ -790,9 +819,33 @@ class Program(QtWidgets.QWidget):
                 self.list_category.append(product._category)
             if product._brand not in self.list_brand:
                 self.list_brand.append(product._brand)
+        self.list_category.sort()
+        self.list_brand.sort()
 
         self.bestProductByCategorySelectMenu.clear()
-        self.bestProductByCategorySelectMenu.addItems(sorted(self.list_category))
+        self.bestProductByCategorySelectMenu.addItems(sorted(self.list_category))    
+        self.updateBestProductsByCategory()
+
+        self.bestProductByBrandSelectMenu.clear()
+        self.bestProductByBrandSelectMenu.addItems(sorted(self.list_brand))
+        self.updateBestProductsByBrand()
+
+        self.updateTotalSellingsByBrand()
+    
+    def updateTotalSellingsByBrand(self):
+        self.canvas2.figure.clear()
+        self.ax2 = self.canvas2.figure.add_subplot(111)
+        self.ax2.set_title("Ventes totales par marque")
+        self.ax2.set_xlabel("")
+        self.ax2.set_ylabel("Ventes totales (€)")
+        self.ax2.bar(self.list_brand, [getTotalSellingsByBrand(brand) for brand in self.list_brand], color="#000000")
+        # set random colors
+        for i in range(len(self.ax2.patches)):
+            self.ax2.patches[i].set_color("#%06x" % random.randint(0, 0xFFFFFF))
+        self.canvas2.draw()
+
+
+    def updateBestProductsByCategory(self):
 
         # Get the category selected
         self.categorySelected = self.bestProductByCategorySelectMenu.currentText()
@@ -814,17 +867,6 @@ class Program(QtWidgets.QWidget):
         self.updateBestProductsByCategory()
 
     def updateBestProductsByBrand(self):
-        self.list_category = list()
-        self.list_brand = list()
-        for product in list_products:
-            if product._category not in self.list_category:
-                self.list_category.append(product._category)
-            if product._brand not in self.list_brand:
-                self.list_brand.append(product._brand)
-
-        self.bestProductByBrandSelectMenu.clear()
-        self.bestProductByBrandSelectMenu.addItems(sorted(self.list_brand))
-
         # Get the category selected
         self.brandSelected = self.bestProductByBrandSelectMenu.currentText()
 

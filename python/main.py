@@ -322,7 +322,6 @@ class FiltersDialog(QtWidgets.QWidget):
             if product._brand not in list_brand:
                 list_brand.append(product._brand)
 
-        #self.setWindowFlags(QtCore.Qt.FramelessWindowHint)
         self.layout = QtWidgets.QVBoxLayout()
 
         self.filters_category = QtWidgets.QGroupBox("Category")

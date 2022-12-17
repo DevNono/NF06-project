@@ -8,6 +8,7 @@ typedef struct {
     int nombre;
 } item_t;  // Structure d'un item
 
+
 int *knapsack (int w, int n, item_t* items) { // On réalise le théroème du sac à dos
     int i, j, k, v, *mm, **m, *s; // On déclare les variables
     mm = calloc((n + 1) * (w + 1), sizeof (int));
@@ -45,32 +46,63 @@ int *knapsack (int w, int n, item_t* items) { // On réalise le théroème du sa
     return s;
 }
 
-
+int number_arr = 0;
+int quantite_update[500];
 int main (int C, int number,int *name_item,int *poids_item_list,int *val_item,int *quantity_item) {    // On récupère les données venant de python
     char UID[100];
     int n;
+    number_arr = number;
     item_t items[number];
+    printf("|----------------------------------------|\n");
+    printf("|                 Resume                 |\n");
+    printf("|UID produit:    quantite: poids: valeur:|\n");
+    printf("|----------------------------------------|\n");
     for (int i=0;i<number;i++){
         sprintf(UID, "%d", name_item[i] );
         items[i].name= UID;
         items[i].poids=poids_item_list[i];  
         items[i].val=val_item[i];
         items[i].nombre=quantity_item[i];
-        printf("%-22d %5d %5d %5d\n", name_item[i], items[i].nombre, items[i].poids, items[i].val);
+        printf("|%-22d %5d %5d %5d|\n", name_item[i], items[i].nombre, items[i].poids, items[i].val);
     }
+    printf("|----------------------------------------|\n\n\n");
+    printf("|----------------------------------------|\n");
+    printf("|        Liste de produits partant       |\n");
+    printf("|UID produit:    quantite: poids: valeur:|\n");
+    printf("|----------------------------------------|\n");
     n = number;
     int *s;
     s = knapsack(C, n, items); // On réalise le théorème du sac à dos
     int i, tc = 0, tw = 0, tv = 0;
     for (i = 0; i < n; i++) {
+        int condition = 0;
         if (s[i]) {
-            printf("%-22d %5d %5d %5d\n", name_item[i], s[i], s[i] * items[i].poids, s[i] * items[i].val); // On affiche les items choisis
+            printf("|%-22d %5d %5d %5d|\n", name_item[i], s[i], s[i] * items[i].poids, s[i] * items[i].val); // On affiche les items choisis
             tc += s[i];
             tw += s[i] * items[i].poids;
             tv += s[i] * items[i].val;
+            condition = 1;
+        }
+        if (condition == 1){
+            quantite_update[i] = items[i].nombre - s[i];
+        }
+        else{
+            quantite_update[i] = items[i].nombre;
         }
     }
-    printf("%-22s %5d %5d %5d\n", "nombre, poids, val:", tc, tw, tv); // On affiche le nombre, le poids et la valeur totale
+    
+    printf("|----------------------------------------|\n");
+    printf("|%-22s %5d %5d %5d|\n", "Total:", tc, tw, tv); // On affiche le nombre, le poids et la valeur totale
+    printf("|----------------------------------------|\n\n\n");
     free(s);
     return 0;
+}
+
+int* Getaray(){
+    int *arr = malloc(number_arr * sizeof(int));
+
+    for (int i=0;i<number_arr;i++){
+        arr[i] = quantite_update[i];
+    }
+    return arr;
 }

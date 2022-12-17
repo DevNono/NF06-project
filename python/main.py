@@ -1,3 +1,4 @@
+# 
 from ctypes import alignment
 import sys
 import random
@@ -8,12 +9,20 @@ from PySide6 import QtCore, QtWidgets, QtGui
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 
+## Variable globale représentant la liste des produits
 list_products = list()
+## Variable globale représentant la liste des filtres
 filters = { "category": list(), "brand": list(), "year": 0 }
+## Variable globale représentant le tri
 order_by = { "type": "nb_sold", "order": "desc" }
+## Variable globale représentant la liste des produits à exporter
 to_export = list()
+## Variable globale représentant la taille du camion
 trucksize = 0
 
+## Classe des produits
+#
+#  Classe utilisée pour stocker les produits contenus dans la base de données
 class Product(object):
     _uid = int()
     _name = str()
@@ -26,6 +35,7 @@ class Product(object):
     _nb_sold = int()
     _review = float()
 
+    ## Constructeur de la classe permettant la création d'un produit
     def __init__(self, uid, name, price, weight, category, brand, year, stock, nb_sold, review):
         self._uid = uid
         self._name = name
@@ -38,10 +48,25 @@ class Product(object):
         self._nb_sold = nb_sold
         self._review = review
 
+## Fonction permettant la création de produits
+#  @param uid L'identifiant du produit
+#  @param name Le nom du produit
+#  @param price Le prix du produit
+#  @param weight Le poids du produit
+#  @param category La catégorie du produit
+#  @param brand La marque du produit
+#  @param year L'année de sortie du produit
+#  @param stock Le stock du produit
+#  @param nb_sold Le nombre de ventes du produit
+#  @param review La note du produit
+# Permet de créer une instance de la classe produit et de l'ajouter à la liste des produits
 def createProduct(uid, name, price, weight, category, brand, year, stock, nb_sold, review):
     product = Product(uid, name, price, weight, category, brand, year, stock, nb_sold, review)
     list_products.append(product)
 
+## Filtre et tri de la liste des produits
+#
+# @return La liste des produits filtrés et triés
 def filterAndOrderProductList():
     list_products_filtered = list()
     for product in list_products:
@@ -71,12 +96,21 @@ def filterAndOrderProductList():
 
     return list_products_filtered
 
+## Fonction permettant de récupérer le prix total des ventes de produits
+#
+#  @return Le prix total des ventes de produits
 def getTotalSellingsEuros():
     total = 0
     for product in list_products:
         total += product._nb_sold * product._price
     return total
 
+## Fonction permettant de récupérer un produit (le meilleur ou le pire) selon une catégorie ou une marque
+#
+#  @param is_best Booléen permettant de savoir si on veut le meilleur ou le pire produit
+#  @param category La catégorie du produit
+#  @param brand La marque du produit
+#  @return Le produit recherché
 def getProduct(is_best, category = None, brand = None):
     if(category == None and brand == None):
         return None
@@ -105,6 +139,10 @@ def getProduct(is_best, category = None, brand = None):
     else:
         return None
 
+## Fonction permettant de récupérer le prix total des ventes de produits selon une marque
+#
+#  @param brand La marque du produit
+#  @return Le prix total des ventes de produits selon une marque
 def getTotalSellingsByBrand(brand):
     total = 0
     for product in list_products:
@@ -112,7 +150,13 @@ def getTotalSellingsByBrand(brand):
             total += product._nb_sold * product._price
     return total
 
+## Classe de la fenêtre graphique de tri des produits
+#
+# Classe permettant d'afficher la fenêtre graphique de tri des produits
 class OrderByDialog(QtWidgets.QDialog):
+    ## Constructeur de la classe OrderByDialog qui permet d'afficher la fenêtre graphique de tri des produits
+    #
+    #  @param parent Le widget parent
     def __init__(self, parent=None):
         super(OrderByDialog, self).__init__(parent)
         self.setWindowTitle("Order by")
@@ -148,6 +192,9 @@ class OrderByDialog(QtWidgets.QDialog):
         self.button.clicked.connect(lambda: self.onOK(parent))
         self.layout.addWidget(self.button)
 
+    ## Fonction permettant de récupérer les données de la fenêtre graphique de tri des produits au clic sur le bouton OK
+    #
+    #  @param parent Le widget parent
     def onOK(self, parent):
         global order_by
         if self.combo.currentIndex() == 0:
@@ -164,7 +211,14 @@ class OrderByDialog(QtWidgets.QDialog):
 
         parent.updateProductList()
         self.close()
+
+## Classe de la fenêtre graphique d'ajout de produit
+#
+# Classe permettant d'afficher la fenêtre graphique d'ajout de produit
 class AddProductDialog(QtWidgets.QDialog):
+    ## Constructeur de la classe AddProductDialog qui permet d'afficher la fenêtre graphique d'ajout de produit
+    #
+    #  @param parent Le widget parent
     def __init__(self, parent=None):
         super(AddProductDialog, self).__init__(parent)
         self.setWindowTitle("Ajouter un produit")
@@ -206,6 +260,9 @@ class AddProductDialog(QtWidgets.QDialog):
         self.button.clicked.connect(lambda: self.onOK(parent))
         self.layout.addWidget(self.button)
 
+    ## Fonction permettant de récupérer les données de la fenêtre graphique d'ajout de produit au clic sur le bouton OK
+    #
+    #  @param parent Le widget parent
     def onOK(self, parent):
         global list_products
         uid = len(list_products) + 1
@@ -223,7 +280,14 @@ class AddProductDialog(QtWidgets.QDialog):
 
         parent.updateProductList()
         self.close()
+
+## Classe de la fenêtre graphique d'exportation de produits
+#
+# Classe permettant d'afficher la fenêtre graphique d'exportation de produits
 class ExportProductsDialog(QtWidgets.QDialog):
+    ## Constructeur de la classe ExportProductsDialog qui permet d'afficher la fenêtre graphique d'exportation de produits
+    #
+    #  @param parent Le widget parent
     def __init__(self, parent=None):
         super(ExportProductsDialog, self).__init__(parent)
         self.setWindowTitle("Exporter des produits")
@@ -259,6 +323,9 @@ class ExportProductsDialog(QtWidgets.QDialog):
         self.button.clicked.connect(lambda: self.onOK(parent))
         self.layout.addWidget(self.button)
 
+    ## Fonction permettant de récupérer les données de la fenêtre graphique d'exportation de produits au clic sur le bouton OK
+    #
+    #  @param parent Le widget parent
     def onOK(self, parent):
         if(self.index < len(list_products) - 1):
             to_export.append({
@@ -310,7 +377,14 @@ class ExportProductsDialog(QtWidgets.QDialog):
             print(to_export)
             # TODO: Add export function (cf. Gaudry)
             self.close()
+
+## Classe de la fenêtre graphique de filtres
+#
+# Classe permettant d'afficher la fenêtre graphique de filtres
 class FiltersDialog(QtWidgets.QWidget):
+    ## Constructeur de la classe FiltersDialog qui permet d'afficher la fenêtre graphique de filtres
+    #
+    #  @param parent Le widget parent
     def __init__(self, parent=None):
         super().__init__()
 
@@ -382,7 +456,10 @@ class FiltersDialog(QtWidgets.QWidget):
         self.layout.addWidget(self.cancel_button)
 
         self.setLayout(self.layout)
-    
+
+    ## Fonction appelée lors du clic sur le bouton Apply
+    #
+    #  @param parent Le widget parent
     def on_apply_button_clicked(self, parent):
         global filters
         filters["category"] = list()
@@ -399,10 +476,21 @@ class FiltersDialog(QtWidgets.QWidget):
             filters["year"] = 0
         parent.updateProductList()
         self.close()
-
+    
+    ## Fonction appelée lors du clic sur le bouton Cancel
+    #
+    #  @param parent Le widget parent
     def on_cancel_button_clicked(self):
         self.close()
+
+## Classe du programme principal
+#
+# Classe permettant de créer la fenêtre graphique principale
 class Program(QtWidgets.QWidget):
+
+    ## Constructeur de la classe Program permettant de créer la fenêtre graphique principale
+    #
+    #  @param parent Le widget parent
     def __init__(self):
         super().__init__()
 
@@ -734,22 +822,27 @@ class Program(QtWidgets.QWidget):
             _style = f.read()
             app.setStyleSheet(_style)
     
+    ## Fonction permettant d'afficher la page d'ajout de produit
     def addProduct(self):
         self.addProductDialog = AddProductDialog(self)
         self.addProductDialog.show()
     
+    ## Fonction permettant d'afficher la page d'export des produits
     def exportProducts(self):
         self.exportProductsDialog = ExportProductsDialog(self)
         self.exportProductsDialog.show()
 
+    ## Fonction permettant d'afficher la page de tri des produits
     def showOrderBy(self):
         self.orderBy = OrderByDialog(self)
         self.orderBy.show()
 
+    ## Fonction permettant d'afficher la page de filtre des produits
     def showFilters(self):
         self.filtersDialog = FiltersDialog(self)
         self.filtersDialog.show()
 
+    ## Fonction permettant de changer de page
     def changePage(self):
         if self.bottomLayout.currentIndex() == 0:
             self.bottomLayout.setCurrentIndex(1)
@@ -757,7 +850,8 @@ class Program(QtWidgets.QWidget):
         else:
             self.bottomLayout.setCurrentIndex(0)
             self.changePages.setText("Statistiques")
-        
+    
+    ## Fonction permettant de mettre à jour le tableau des produits
     def setData(self, table): 
         for i in range(len(table.data)):
             #enumerate
@@ -766,6 +860,7 @@ class Program(QtWidgets.QWidget):
                 item.setTextAlignment(QtCore.Qt.AlignCenter)
                 table.setItem(i, n, item)
     
+    ## Fonction permettant d'exporter les produits en JSON
     def exportProductListToJSON(self):
         name = QtWidgets.QFileDialog.getSaveFileName(self, 'Exporter Fichier', filter="JSON (*.json)")
 
@@ -773,6 +868,7 @@ class Program(QtWidgets.QWidget):
             with open(name[0], "w") as f:
                 json.dump([product.__dict__ for product in list_products], f, indent = 4)
 
+    ## Fonction permettant d'importer les produits en JSON
     def importProductListFromJSON(self):
         name = QtWidgets.QFileDialog.getOpenFileName(self, 'Importer Fichier', filter="JSON (*.json)")
         if name[0] != "":
@@ -782,13 +878,15 @@ class Program(QtWidgets.QWidget):
                 for product in json_object:
                     createProduct(product["_uid"], product["_name"], product["_price"], product["_weight"], product["_category"], product["_brand"], product["_year"], product["_stock"], product["_nb_sold"], product["_review"])
             self.updateProductList()
-        
+
+    ## Fonction permettant de mettre à jour la liste des produits
     def updateProductList(self):
         self.table.data = filterAndOrderProductList()
         self.table.setRowCount(len(self.table.data))
         self.setData(self.table)
         self.updateStatistics()
     
+    ## Fonction permettant de mettre à jour les statistiques
     def updateStatistics(self):
         self.totalSellingsEuros.setText(str(getTotalSellingsEuros()))
         self.canvas.figure.clear()
@@ -831,6 +929,7 @@ class Program(QtWidgets.QWidget):
 
         self.updateTotalSellingsByBrand()
     
+    ## Fonction permettant de mettre à jour le graphique des ventes par marque
     def updateTotalSellingsByBrand(self):
         self.canvas2.figure.clear()
         self.ax2 = self.canvas2.figure.add_subplot(111)
@@ -843,7 +942,7 @@ class Program(QtWidgets.QWidget):
             self.ax2.patches[i].set_color("#%06x" % random.randint(0, 0xFFFFFF))
         self.canvas2.draw()
 
-
+    ## Fonction permettant de mettre à jour les meilleurs ou pire produits par catégorie
     def updateBestProductsByCategory(self):
 
         # Get the category selected
@@ -856,6 +955,7 @@ class Program(QtWidgets.QWidget):
             # Update the best product label
             self.bestProductByCategoryText.setText(self.bestProduct._name)
 
+    ## Fonction permettant de changer le meilleur ou pire produit par catégorie
     def switchBestProductByCategory(self):
         if self.bestProductByCategorySwitch.isChecked():
             self.bestProductByCategorySwitch.setText("Pire")
@@ -865,6 +965,7 @@ class Program(QtWidgets.QWidget):
             self.bestProductByCategoryTitle.setText("Meilleur produit de la catégorie")
         self.updateBestProductsByCategory()
 
+    ## Fonction permettant de mettre à jour les meilleurs ou pire produits par marque
     def updateBestProductsByBrand(self):
         # Get the category selected
         self.brandSelected = self.bestProductByBrandSelectMenu.currentText()
@@ -876,6 +977,7 @@ class Program(QtWidgets.QWidget):
             # Update the best product label
             self.bestProductByBrandText.setText(self.bestProduct._name)
 
+    ## Fonction permettant de changer le meilleur ou pire produit par marque
     def switchBestProductByBrand(self):
         if self.bestProductByBrandSwitch.isChecked():
             self.bestProductByBrandSwitch.setText("Pire")
@@ -885,7 +987,7 @@ class Program(QtWidgets.QWidget):
             self.bestProductByBrandTitle.setText("Meilleur produit de la marque")
         self.updateBestProductsByBrand()
 
-
+    ## Fonction permettant de graphiquement mettre des bords arrondis à un widget
     def paintEvent(self, event):
         # get current window size
         s = self.size()
@@ -897,13 +999,15 @@ class Program(QtWidgets.QWidget):
         qp.drawRoundedRect(0, 0, s.width(), s.height(),
                            self.borderRadius, self.borderRadius)
         qp.end()
-
+    
+    ## Fonction permettant le déplacement de la fenêtre sur l'écran
     def mousePressEvent(self, event):
         if self.draggable and event.button() == QtCore.Qt.LeftButton:
             self.__mousePressPos = event.globalPosition().toPoint()                # global
             self.__mouseMovePos = event.globalPosition().toPoint() - self.pos()    # local
         super(Program, self).mousePressEvent(event)
 
+    ## Fonction permettant le déplacement de la fenêtre sur l'écran
     def mouseMoveEvent(self, event):
         if self.draggable and event.buttons() & QtCore.Qt.LeftButton:
             globalPos = event.globalPosition().toPoint()
@@ -915,6 +1019,7 @@ class Program(QtWidgets.QWidget):
                 self.__mouseMovePos = globalPos - self.pos()
         super(Program, self).mouseMoveEvent(event)
 
+    ## Fonction permettant le déplacement de la fenêtre sur l'écran
     def mouseReleaseEvent(self, event):
         if self.__mousePressPos is not None:
             if event.button() == QtCore.Qt.LeftButton:
@@ -929,6 +1034,7 @@ class Program(QtWidgets.QWidget):
         if event.button() == QtCore.Qt.RightButton:
             QtGui.qApp.exit()   
 
+## Fonction principale
 if __name__ == "__main__":
     app = QtWidgets.QApplication([])
 

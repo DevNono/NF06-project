@@ -1,0 +1,14 @@
+Liste de produits partant: 
+Poids maximum du camion: 1
+Nombre d'items de la commande: 1
+
+|----------------------------------------|
+|        Liste de produits partant       |
+|UID produit:    quantite: poids: valeur:|
+|----------------------------------------|
+|1                          1     1     1|
+|----------------------------------------|
+|Total:                     1     1     1|
+|----------------------------------------|
+
+Nombre d'items differents partant: 1

@@ -48,3 +48,5 @@ print("|  La liste de produits mise à jour est :|")
 print("|UID produit:    quantite: poids: valeur:|")
 for i in range(nb):
     print('|%-22s' % Values[i], '%5d'% result[i],'%5d'% Weights[i],'%5d|'% Price[i])
+
+lib.free_array(result) #On libère le tableau de résultat

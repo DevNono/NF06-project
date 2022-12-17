@@ -9,9 +9,10 @@ typedef struct {
 } item_t;  // Structure d'un item
 
 
+
 int *knapsack (int w, int n, item_t* items) { // On réalise le théroème du sac à dos
     int i, j, k, v, *mm, **m, *s; // On déclare les variables
-    mm = calloc((n + 1) * (w + 1), sizeof (int));
+    mm = calloc((n + 1) * (w + 1), sizeof (int)); // On alloue la mémoire
     m = malloc((n + 1) * sizeof (int *));
     m[0] = mm;
     for (i = 1; i <= n; i++) {  // On parcourt la liste d'items
@@ -22,7 +23,7 @@ int *knapsack (int w, int n, item_t* items) { // On réalise le théroème du sa
                 if (k * items[i - 1].poids > j) { // Si le poids de l'item est supérieur au poids du sac
                     break;
                 }
-                v = m[i - 1][j - k * items[i - 1].poids] + k * items[i - 1].val; // On calcule la valeur de l'item
+                v = m[i - 1][j - k * items[i - 1].poids] + k * items[i - 1].val; // On calcule la valeur de l'item avec le tri dynamique
                 if (v > m[i][j]) {
                     m[i][j] = v; // On met à jour la valeur de l'item
                 }
@@ -34,7 +35,7 @@ int *knapsack (int w, int n, item_t* items) { // On réalise le théroème du sa
         int v = m[i][j];
         int quantity = items[i - 1].nombre;
         for (k = 0; v != m[i - 1][j] + k * items[i - 1].val; k++) {
-            if (quantity != 0) {
+            if (quantity != 0) { // Si la de l'item est nul, on passe à l'item suivant
                 s[i - 1]++;
                 j -= items[i - 1].poids; // On met à jour le poids du sac
                 quantity--;
@@ -49,10 +50,20 @@ int *knapsack (int w, int n, item_t* items) { // On réalise le théroème du sa
 int number_arr = 0;
 int quantite_update[500];
 int main (int C, int number,int *name_item,int *poids_item_list,int *val_item,int *quantity_item) {    // On récupère les données venant de python
+    printf("Veuillez indiquer le nom du fichier (.txt) de sauvegarde: "); // On demande le nom du fichier de sauvegarde
+    char nom_fichier[100];
+    scanf("%s", nom_fichier);
+    FILE *fichier = fopen(nom_fichier, "w"); // On ouvre le fichier de sauvegarde
+    fprintf(fichier, "Liste de produits partant: \n");// On écrit dans le fichier de sauvegarde
     char UID[100];
     int n;
     number_arr = number;
     item_t items[number];
+    printf("\n\n\nVoici les informations suivantes:   \n");
+    printf(" Poids maximum du camion: %d\n", C);
+    printf(" Nombre d'items de la commande: %d\n", number);                         // On affiche les informations dans le terminal et dans le fichier de sauvegarde
+    fprintf(fichier, "Poids maximum du camion: %d\n", C);
+    fprintf(fichier, "Nombre d'items de la commande: %d\n\n", number);
     printf("|----------------------------------------|\n");
     printf("|                 Resume                 |\n");
     printf("|UID produit:    quantite: poids: valeur:|\n");
@@ -70,18 +81,24 @@ int main (int C, int number,int *name_item,int *poids_item_list,int *val_item,in
     printf("|        Liste de produits partant       |\n");
     printf("|UID produit:    quantite: poids: valeur:|\n");
     printf("|----------------------------------------|\n");
+    fprintf(fichier, "|----------------------------------------|\n");
+    fprintf(fichier, "|        Liste de produits partant       |\n");
+    fprintf(fichier, "|UID produit:    quantite: poids: valeur:|\n");
+    fprintf(fichier, "|----------------------------------------|\n");
     n = number;
     int *s;
     s = knapsack(C, n, items); // On réalise le théorème du sac à dos
-    int i, tc = 0, tw = 0, tv = 0;
+    int i,nb_item = 0, tc = 0, tw = 0, tv = 0;
     for (i = 0; i < n; i++) {
         int condition = 0;
         if (s[i]) {
             printf("|%-22d %5d %5d %5d|\n", name_item[i], s[i], s[i] * items[i].poids, s[i] * items[i].val); // On affiche les items choisis
+            fprintf(fichier, "|%-22d %5d %5d %5d|\n", name_item[i], s[i], s[i] * items[i].poids, s[i] * items[i].val); // On affiche les items choisis
             tc += s[i];
             tw += s[i] * items[i].poids;
             tv += s[i] * items[i].val;
             condition = 1;
+            nb_item++;
         }
         if (condition == 1){
             quantite_update[i] = items[i].nombre - s[i];
@@ -94,7 +111,13 @@ int main (int C, int number,int *name_item,int *poids_item_list,int *val_item,in
     printf("|----------------------------------------|\n");
     printf("|%-22s %5d %5d %5d|\n", "Total:", tc, tw, tv); // On affiche le nombre, le poids et la valeur totale
     printf("|----------------------------------------|\n\n\n");
+    fprintf(fichier, "|----------------------------------------|\n");
+    fprintf(fichier, "|%-22s %5d %5d %5d|\n", "Total:", tc, tw, tv); // On affiche le nombre, le poids et la valeur totale
+    fprintf(fichier, "|----------------------------------------|\n\n");
+    printf("Nombre d'items differents partant: %d\n\n", nb_item); // On affiche le nombre d'items partant
+    fprintf(fichier, "Nombre d'items differents partant: %d\n", nb_item); // On affiche le nombre d'items partant
     free(s);
+    fclose(fichier);
     return 0;
 }
 
@@ -105,4 +128,8 @@ int* Getaray(){
         arr[i] = quantite_update[i];
     }
     return arr;
+}
+
+void free_array(int *arr){
+    free(arr);
 }

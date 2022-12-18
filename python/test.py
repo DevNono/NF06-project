@@ -1,14 +1,14 @@
-from ctypes import alignment, c_int, cdll, POINTER, Structure
-from pathlib import Path
+from ctypes import alignment, c_int, cdll, POINTER, Structure # Pour utiliser les fonctions C et que Ctypes puisse les utiliser
+from pathlib import Path  # Pour trouver le chemin du fichier DLL
 
 
-def open_dll(name='test.dll'):
+def open_dll(name='test.dll'):   #On ouvre le fichier DLL
     dll_path = Path(__file__).parent / name
     return cdll.LoadLibrary(str(dll_path))
 
 
-lib = open_dll()
-Values = []
+lib = open_dll() # On ouvre le fichier DLL
+Values = [] # On crée les listes qui contiendront les valeurs entrées par l'utilisateur
 Weights = []
 Price = []
 Quantity = []
@@ -42,15 +42,15 @@ Quantity = (c_int * len(Quantity))(*Quantity)
 
 
 lib.main(C, Number, Values, Weights, Price, Quantity, len(
-    Values))  # On récupère le résultat de la fonction
+    Values)) # On appelle la fonction main du fichier DLL, on réalise ainsi le théorème de Knapsack (du sac à dos)
 
-lib.Getaray.restype = POINTER(c_int)  # On récupère le tableau de résultat
-result = lib.Getaray()
+lib.Getaray.restype = POINTER(c_int)  # On indique le type de résultat de la fonction Getaray
+result = lib.Getaray() # On récupère le tableau de produits mis à jour
 print("|----------------------------------------|")
 print("|  La liste de produits mise à jour est :|")
 print("|UID produit:    quantite: poids: valeur:|")
 for i in range(nb):
     print('|%-22s' % Values[i], '%5d' %
-          result[i], '%5d' % Weights[i], '%5d|' % Price[i])
+          result[i], '%5d' % Weights[i], '%5d|' % Price[i]) # On affiche le tableau de résultat
 
 lib.free_array(result)  # On libère le tableau de résultat

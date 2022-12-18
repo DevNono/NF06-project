@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include <stdlib.h>
+#include <stdlib.h>  //On inclut les librairies
 
 typedef struct
 {
@@ -52,7 +52,7 @@ int *knapsack(int w, int n, item_t *items)
     }
     free(mm);
     free(m); // On libère la mémoire
-    return s;
+    return s; // On retourne la liste des items
 }
 
 int number_arr = 0;
@@ -118,7 +118,7 @@ int main(int C, int number, int *name_item, int *poids_item_list, int *val_item,
         }
         else
         {
-            quantite_update[i] = items[i].nombre;
+            quantite_update[i] = items[i].nombre;   // On met à jour la quantité de chaque item pour ainsi les envoyer à python
         }
     }
 
@@ -135,7 +135,7 @@ int main(int C, int number, int *name_item, int *poids_item_list, int *val_item,
     return 0;
 }
 
-int *Getaray()
+int *Getaray() // On récupère le tableau de la quantité de chaque item et on le renvoie à python
 {
     int *arr = malloc(number_arr * sizeof(int));
 
@@ -146,7 +146,7 @@ int *Getaray()
     return arr;
 }
 
-void free_array(int *arr)
+void free_array(int *arr) // On libère la mémoire
 {
     free(arr);
 }

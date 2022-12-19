@@ -453,6 +453,7 @@ class ExportProductsDialog(QtWidgets.QDialog):
                     for product in list_products:
                         if product._uid == ids[i]:
                             product._stock -= diff
+                            product._nb_sold += diff
                             break
             for i in range(len(to_display)):
                 to_display[i].setAlignment(QtCore.Qt.AlignCenter)

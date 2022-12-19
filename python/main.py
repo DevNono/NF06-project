@@ -2,7 +2,6 @@ from ctypes import alignment, c_int, cdll, POINTER, Structure
 from pathlib import Path
 import sys
 import random
-import matplotlib
 import json
 import numpy as np
 from PySide6 import QtCore, QtWidgets, QtGui

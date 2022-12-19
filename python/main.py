@@ -426,13 +426,17 @@ class ExportProductsDialog(QtWidgets.QDialog):
             # On récupère le tableau de produits mis à jour
             result = lib.Getaray()
             # On reinitialise l'affichage de la fenêtre graphique d'exportation de produits
+            self.layout.removeWidget(self.label)
             self.layout.removeWidget(self.truckWeight)
             self.layout.removeWidget(self.button)
+            self.label.deleteLater()
             self.truckWeight.deleteLater()
             self.button.deleteLater()
 
             # On affiche les produits exportés
             self.title = QtWidgets.QLabel("Produits exportés")
+            self.title.setStyleSheet("font-size: 20px;")
+            self.title.setAlignment(QtCore.Qt.AlignCenter)
             self.layout.addWidget(self.title)
             to_display = []
             for i in range(len(to_export[0])):
@@ -441,16 +445,17 @@ class ExportProductsDialog(QtWidgets.QDialog):
                 # On affiche le produit exporté avec sa quantité
                 to_display.append(
                     QtWidgets.QLabel(
-                        to_export[4][i] + " : " + str(diff) + " unité(s)"
+                        to_export[4][i] + " : " + str(diff) + "/" + str(to_export[3][i]) + " unité(s)"
                     )
                 )
-                if(diff != 0):
+                if(diff != c_int(0)):
                     # On met à jour le stock des produits en utilisant l'uid
                     for product in list_products:
                         if product._uid == ids[i]:
                             product._stock -= diff
                             break
             for i in range(len(to_display)):
+                to_display[i].setAlignment(QtCore.Qt.AlignCenter)
                 self.layout.addWidget(to_display[i])
             self.button = QtWidgets.QPushButton("Terminer")
             self.button.clicked.connect(lambda: self.onExit())
@@ -1151,6 +1156,21 @@ if __name__ == "__main__":
 
     program = Program()
     program.resize(960, 720)
+
+    # Get the screen dimensions
+    screen_width = app.screens()[0].geometry().width()
+    screen_height = app.screens()[0].geometry().height()
+
+    # Calculate the window position
+    window_width = program.size().width()
+    window_height = program.size().height()
+    x = (screen_width - window_width) / 2
+    y = (screen_height - window_height) / 2
+
+    # Move the window to the center of the screen
+    program.move(int(x), int(y))
+
+
     program.show()
 
     sys.exit(app.exec())

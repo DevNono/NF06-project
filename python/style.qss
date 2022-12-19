@@ -19,6 +19,6 @@ QTableWidget {
 } 
 
 QTableWidget::item:selected {
-    background-color: #12782D; 
+    background-color: #393a3f; 
     color: #ffffff;
 }

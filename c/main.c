@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>  //On inclut les librairies
+#include <string.h>
+#include <time.h>
 
 typedef struct
 {
@@ -59,10 +61,18 @@ int number_arr = 0;
 int quantite_update[500];
 int main(int C, int number, int *name_item, int *poids_item_list, int *val_item, int *quantity_item)
 {                                                                         // On récupère les données venant de python
-    printf("Veuillez indiquer le nom du fichier (.txt) de sauvegarde: "); // On demande le nom du fichier de sauvegarde
-    char nom_fichier[100];
-    scanf("%s", nom_fichier);
-    FILE *fichier = fopen(nom_fichier, "w");           // On ouvre le fichier de sauvegarde
+    // On cherche la date et l'heure actuelle
+    time_t t = time(NULL);
+    struct tm tm = *localtime(&t);
+    // On ouvre le fichier de sauvegarde dans un dossier spécifique
+    char chemin[100] = "C:\\Users\\Public\\Documents\\";
+    strcat(chemin,"sauvegarde_");
+    // On ajoute la date et l'heure actuelle au nom du fichier de sauvegarde
+    char date[100];
+    sprintf(date, "%d-%d-%d_%d-%d", tm.tm_mday, tm.tm_mon + 1,tm.tm_year + 1900 , tm.tm_hour, tm.tm_min);
+    strcat(chemin, date);
+    strcat(chemin, ".txt");
+    FILE *fichier = fopen(chemin, "w");         // On ouvre le fichier de sauvegarde
     fprintf(fichier, "Liste de produits partant: \n"); // On écrit dans le fichier de sauvegarde
     char UID[100];
     int n;
@@ -72,7 +82,6 @@ int main(int C, int number, int *name_item, int *poids_item_list, int *val_item,
     printf(" Poids maximum du camion: %d\n", C);
     printf(" Nombre d'items de la commande: %d\n", number); // On affiche les informations dans le terminal et dans le fichier de sauvegarde
     fprintf(fichier, "Poids maximum du camion: %d\n", C);
-    fprintf(fichier, "Nombre d'items de la commande: %d\n\n", number);
     printf("|----------------------------------------|\n");
     printf("|                 Resume                 |\n");
     printf("|UID produit:    quantite: poids: valeur:|\n");

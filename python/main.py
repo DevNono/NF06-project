@@ -24,7 +24,7 @@ trucksize = c_int(0)
 # 
 # @param name Le nom du fichier DLL 
 # @return Le fichier DLL
-def open_dll(name='test.dll'):
+def open_dll(name='main.dll'):
     dll_path = Path(__file__).parent / name
     return cdll.LoadLibrary(str(dll_path))
 

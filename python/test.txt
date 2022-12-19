@@ -1,0 +1,18 @@
+Liste de produits partant: 
+Poids maximum du camion: 5000
+Nombre d'items de la commande: 5
+
+|----------------------------------------|
+|        Liste de produits partant       |
+|UID produit:    quantite: poids: valeur:|
+|----------------------------------------|
+|5140                      10  1890  8220|
+|78681                      1   559   318|
+|31329                      2   630   960|
+|36391                      6  1170  2718|
+|49985                      2   672   492|
+|----------------------------------------|
+|Total:                    21  4921 12708|
+|----------------------------------------|
+
+Nombre d'items differents partant: 5

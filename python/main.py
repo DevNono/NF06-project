@@ -1,5 +1,5 @@
-# 
-from ctypes import alignment
+from ctypes import alignment, c_int, cdll, POINTER, Structure
+from pathlib import Path
 import sys
 import random
 import matplotlib
@@ -15,10 +15,21 @@ list_products = list()
 filters = { "category": list(), "brand": list(), "year": 0 }
 ## Variable globale représentant le tri
 order_by = { "type": "nb_sold", "order": "desc" }
-## Variable globale représentant la liste des produits à exporter
-to_export = list()
+## Variable globale représentant la liste des noms, des poids, des prix et des quantités des produits à exporter
+to_export = [[], [], [], [], []]
 ## Variable globale représentant la taille du camion
-trucksize = 0
+trucksize = c_int(0)
+
+## Fonction permettant l'ouverture du fichier DLL
+# 
+# @param name Le nom du fichier DLL 
+# @return Le fichier DLL
+def open_dll(name='test.dll'):
+    dll_path = Path(__file__).parent / name
+    return cdll.LoadLibrary(str(dll_path))
+
+## Ouverture du fichier DLL
+lib = open_dll()
 
 ## Classe des produits
 #
@@ -159,11 +170,11 @@ class OrderByDialog(QtWidgets.QDialog):
     #  @param parent Le widget parent
     def __init__(self, parent=None):
         super(OrderByDialog, self).__init__(parent)
-        self.setWindowTitle("Order by")
+        self.setWindowTitle("Trier par")
 
         self.layout = QtWidgets.QVBoxLayout(self)
 
-        self.label = QtWidgets.QLabel("Order by")
+        self.label = QtWidgets.QLabel("Trier par")
         self.layout.addWidget(self.label)
 
         self.combo = QtWidgets.QComboBox()
@@ -178,8 +189,8 @@ class OrderByDialog(QtWidgets.QDialog):
         
         self.layout.addWidget(self.combo)
 
-        self.ascend = QtWidgets.QRadioButton("Ascend")
-        self.desc = QtWidgets.QRadioButton("Descend")
+        self.ascend = QtWidgets.QRadioButton("Croissant")
+        self.desc = QtWidgets.QRadioButton("Decroissant")
         if order_by["order"] == "asc":
             self.ascend.setChecked(True)
         else:
@@ -328,28 +339,56 @@ class ExportProductsDialog(QtWidgets.QDialog):
     #  @param parent Le widget parent
     def onOK(self, parent):
         if(self.index < len(list_products) - 1):
-            to_export.append({
-                self.product._name,
-                self.product._weight,
-                self.product._price,
-                self.quantity.value()
-            })
+            if(self.quantity.value() > 0):
+                to_export[0].append(
+                    self.product._uid,
+                )
+                to_export[1].append(
+                    self.product._weight,
+                )
+                to_export[2].append(
+                    self.product._price,
+                )
+                to_export[3].append(
+                    self.quantity.value()
+                )
+                to_export[4].append(
+                    self.product._name,
+                )
             self.index += 1
-            self.product = list_products[self.index]
-            self.name.setText(self.product._name)
-            self.brand.setText(self.product._brand)
-            self.stock.setText(str(self.product._stock))
-            self.category.setText(self.product._category)
-            self.quantity.setMinimum(0)
-            self.quantity.setMaximum(self.product._stock)
-            self.quantity.setValue(0)
+            while True:
+                self.product = list_products[self.index]
+                if self.product._stock > 0:
+                    self.name.setText(self.product._name)
+                    self.brand.setText(self.product._brand)
+                    self.stock.setText(str(self.product._stock))
+                    self.category.setText(self.product._category)
+                    self.quantity.setMinimum(0)
+                    self.quantity.setMaximum(self.product._stock)
+                    self.quantity.setValue(0)
+                    break
+                elif(self.index == len(list_products) - 1):
+                    self.onOK(parent)
+                    break
+                
+            
         elif(self.index == len(list_products) - 1):
-            to_export.append({
-                self.product._name,
-                self.product._weight,
-                self.product._price,
-                self.quantity.value()
-            })
+            if(self.quantity.value() > 0):
+                to_export[0].append(
+                    self.product._uid,
+                )
+                to_export[1].append(
+                    self.product._weight,
+                )
+                to_export[2].append(
+                    self.product._price,
+                )
+                to_export[3].append(
+                    self.quantity.value()
+                )
+                to_export[4].append(
+                    self.product._name,
+                )
             self.index += 1
 
             self.layout.removeWidget(self.name)
@@ -372,11 +411,62 @@ class ExportProductsDialog(QtWidgets.QDialog):
         else:
             if(self.truckWeight.text() == ""):
                 return
-            trucksize = float(self.truckWeight.text())
-            print(trucksize)
-            print(to_export)
-            # TODO: Add export function (cf. Gaudry)
-            self.close()
+            ids = (c_int * len(to_export[0]))(*to_export[0])
+            weights = (c_int * len(to_export[1]))(*to_export[1])
+            prices = (c_int * len(to_export[2]))(*to_export[2])
+            quantities = (c_int * len(to_export[3]))(*to_export[3])
+            trucksize = c_int(int(self.truckWeight.text()))
+
+            # On appelle la fonction main du fichier DLL, on réalise ainsi le théorème de Knapsack (du sac à dos)
+            lib.main(trucksize, c_int(len(to_export[0])), ids, weights, prices, quantities, len(
+    ids))
+            # On indique le type de résultat de la fonction Getaray
+            lib.Getaray.restype = POINTER(c_int)
+
+            # On récupère le tableau de produits mis à jour
+            result = lib.Getaray()
+            # On reinitialise l'affichage de la fenêtre graphique d'exportation de produits
+            self.layout.removeWidget(self.truckWeight)
+            self.layout.removeWidget(self.button)
+            self.truckWeight.deleteLater()
+            self.button.deleteLater()
+
+            # On affiche les produits exportés
+            self.title = QtWidgets.QLabel("Produits exportés")
+            self.layout.addWidget(self.title)
+            to_display = []
+            for i in range(len(to_export[0])):
+                # On récupère la différence entre la quantité initiale et la quantité finale
+                diff = quantities[i] - result[i]
+                # On affiche le produit exporté avec sa quantité
+                to_display.append(
+                    QtWidgets.QLabel(
+                        to_export[4][i] + " : " + str(diff) + " unité(s)"
+                    )
+                )
+                if(diff != 0):
+                    # On met à jour le stock des produits en utilisant l'uid
+                    for product in list_products:
+                        if product._uid == ids[i]:
+                            product._stock -= diff
+                            break
+            for i in range(len(to_display)):
+                self.layout.addWidget(to_display[i])
+            self.button = QtWidgets.QPushButton("Terminer")
+            self.button.clicked.connect(lambda: self.onExit())
+            self.layout.addWidget(self.button)
+
+            # On libère la mémoire allouée par le tableau de produits mis à jour
+            lib.free_array(result)
+            # On met à jour la liste des produits et les statisques pour le parent
+            parent.updateProductList()
+
+    ## Fermeture de la fenêtre graphique
+    #
+    # Fonction permettant de fermer la fenêtre graphique d'exportation de produits
+    def onExit(self):
+        self.close()
+
 
 ## Classe de la fenêtre graphique de filtres
 #
@@ -501,6 +591,11 @@ class Program(QtWidgets.QWidget):
         # make the window frameless
         self.setWindowFlags(QtCore.Qt.FramelessWindowHint)
         self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+        self.setWindowFlag(QtCore.Qt.WindowMinMaxButtonsHint, False)
+        self.setWindowFlag(QtCore.Qt.WindowCloseButtonHint, False)
+        self.setWindowFlag(QtCore.Qt.Window, True)
+        self.setWindowFlag(QtCore.Qt.MSWindowsFixedSizeDialogHint, False)
+        self.setWindowFlag(QtCore.Qt.SubWindow, False)
 
         self.backgroundColor = QtGui.QColor(255,255,255)
         self.foregroundColor = QtGui.QColor(238,238,238)
@@ -567,6 +662,13 @@ class Program(QtWidgets.QWidget):
         self.Button.setToolTip("Importer une liste de produits")
         self.Button.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
         self.Button.clicked.connect(self.importProductListFromJSON)
+        self.topRightLayout.addWidget(self.Button)
+
+        self.Button = QtWidgets.QPushButton()
+        self.Button.setIcon(QtGui.QIcon("assets/exit.svg"))
+        self.Button.setToolTip("Quitter le programme")
+        self.Button.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
+        self.Button.clicked.connect(self.quit)
         self.topRightLayout.addWidget(self.Button)
 
         self.topLayout.addLayout(self.topRightLayout)
@@ -822,6 +924,10 @@ class Program(QtWidgets.QWidget):
             _style = f.read()
             app.setStyleSheet(_style)
     
+    ## Fonction permettant de quitter l'application
+    def quit(self):
+        QtGui.QGuiApplication.exit()
+
     ## Fonction permettant d'afficher la page d'ajout de produit
     def addProduct(self):
         self.addProductDialog = AddProductDialog(self)
@@ -987,6 +1093,11 @@ class Program(QtWidgets.QWidget):
             self.bestProductByBrandTitle.setText("Meilleur produit de la marque")
         self.updateBestProductsByBrand()
 
+    ## Fonction permettant de mettre à jour la fenêtre lors d'un redimensionnement
+    def resizeEvent(self, event):
+        # Update the size of the window and redraw its contents
+        self.update()
+    
     ## Fonction permettant de graphiquement mettre des bords arrondis à un widget
     def paintEvent(self, event):
         # get current window size
@@ -1032,7 +1143,7 @@ class Program(QtWidgets.QWidget):
 
         # close event
         if event.button() == QtCore.Qt.RightButton:
-            QtGui.qApp.exit()   
+            QtGui.QGuiApplication.exit() 
 
 ## Fonction principale
 if __name__ == "__main__":

@@ -278,8 +278,8 @@ class AddProductDialog(QtWidgets.QDialog):
         global list_products
         uid = len(list_products) + 1
         name = self.name.text()
-        price = float(self.price.text())
-        weight = float(self.weight.text())
+        price = int(self.price.text())
+        weight = int(self.weight.text())
         category = self.category.text()
         brand = self.brand.text()
         year = int(self.year.text())

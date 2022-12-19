@@ -1,11 +1,22 @@
+/**
+ * @file without_ctypes.c
+ * @author Gaudry Carlier and Noe Landre
+ * @brief 
+ * @version 0.1
+ * @date 2022-12-19
+ * 
+ * @copyright Copyright (c) 2022
+ * 
+ */
+//Cette version du code est la version sans ctypes et donc moins optimisée
 #include <stdio.h>
 #include <stdlib.h>
 typedef struct {
-    char *name;
-    int poids;
-    int val;
-    int nombre;
-} item_t;  // Structure d'un item
+    char *name; // une valeur en chaine de caractère
+    int poids; // Valeur entiere
+    int val; // Valeur entiere
+    int nombre; // Valeur entiere
+} item_t;  // Structure d'un item  // Liste d'items pour le théorème du sac à dos*
 
 item_t items[] = {                                              // Liste d'items pour le théorème du sac à dos*
     {"map",                      9,   150,   1},                // De formes ("Nom", Poids, valeur, nombre (= quantité))
@@ -32,7 +43,7 @@ item_t items[] = {                                              // Liste d'items
     {"book",                    30,    10,   2},
 };
 
-int n = sizeof (items) / sizeof (item_t);
+int n = sizeof (items) / sizeof (item_t); // On déclare la taille de la liste d'items
 
 int *knapsack (int w) { // On réalise le théroème du sac à dos
     int i, j, k, v, *mm, **m, *s; // On déclare les variables
@@ -45,7 +56,7 @@ int *knapsack (int w) { // On réalise le théroème du sac à dos
             m[i][j] = m[i - 1][j];
             for (k = 1; k <= items[i - 1].nombre; k++) {
                 if (k * items[i - 1].poids > j) { // Si le poids de l'item est supérieur au poids du sac
-                    break;
+                    break; // On arrête la boucle
                 }
                 v = m[i - 1][j - k * items[i - 1].poids] + k * items[i - 1].val; // On calcule la valeur de l'item
                 if (v > m[i][j]) {
@@ -55,7 +66,12 @@ int *knapsack (int w) { // On réalise le théroème du sac à dos
         }
     }
     s = calloc(n, sizeof (int));
-    for (i = n, j = w; i > 0; i--) {
+    for (i = n, j = w; i > 0; i--) { /**
+     * @brief On parcourt la liste d'items
+     * @param i
+     * @param j
+     * @return int
+     */
         int v = m[i][j];
         for (k = 0; v != m[i - 1][j] + k * items[i - 1].val; k++) {
             s[i - 1]++;
@@ -68,6 +84,12 @@ int *knapsack (int w) { // On réalise le théroème du sac à dos
 }
 
 int main () {
+    /**
+     * @brief Fonction principale
+     * @return int
+     * @return 0
+     * 
+     */
     int C = 400;
     int *s;
     s = knapsack(C); // On réalise le théorème du sac à dos

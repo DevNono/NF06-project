@@ -1,8 +1,8 @@
 /**
  * @file main.c
- * @author Gaudry Carlier and Noe Landre
- * @brief 
- * @version 0.1
+ * @author Gaudry Carlier and Noé Landré
+ * @brief Fichier contenant le code c du programme 
+ * @version 1.0
  * @date 2022-12-19
  * 
  * @copyright Copyright (c) 2022
@@ -10,7 +10,7 @@
  */
 
 #include <stdio.h>
-#include <stdlib.h>  //On inclut les librairies
+#include <stdlib.h>  // On inclut les librairies
 #include <string.h>
 #include <time.h>
 
@@ -24,10 +24,10 @@ typedef struct
 /**
  * @brief 
  * 
- * @param w 
- * @param n 
- * @param items 
- * @return int* 
+ * @param w poids du sac
+ * @param n nombre d'items
+ * @param items liste des items 
+ * @return int* liste des items
  */
 int *knapsack(int w, int n, item_t *items) 
 {                                                // On réalise le théroème du sac à dos
@@ -77,20 +77,21 @@ int *knapsack(int w, int n, item_t *items)
 
 int number_arr = 0;
 int quantite_update[500];
+
+/**
+ * @brief Fonction principale
+ * 
+ * @param C poids maximum du camion
+ * @param number nombre d'items
+ * @param name_item liste des noms des items
+ * @param poids_item_list liste des poids des items
+ * @param val_item liste des prix des items
+ * @param quantity_item liste des quantités des items
+ * @return int 0
+ * 
+ */
 int main(int C, int number, int *name_item, int *poids_item_list, int *val_item, int *quantity_item)
 {   
-    /**
-     * @brief 
-     * 
-     * @param C
-     * @param number
-     * @param name_item
-     * @param poids_item_list
-     * @param val_item
-     * @param quantity_item
-     * @return int
-     * 
-     */
     // On cherche la date et l'heure actuelle
     time_t t = time(NULL);
     struct tm tm = *localtime(&t);
@@ -180,14 +181,14 @@ int main(int C, int number, int *name_item, int *poids_item_list, int *val_item,
     return 0;
 }
 
-int *Getaray() // On récupère le tableau de la quantité de chaque item et on le renvoie à python
+/**
+ * @brief Construit le tableau de la quantité de chaque item
+ * 
+ * @return int* Tableau de la quantité de chaque item
+ * 
+ */
+int *Getaray()
 {
-    /**
-     * @brief Construct a new getaray object
-     * @param number_arr
-     * @return int
-     * 
-     */
     int *arr = malloc(number_arr * sizeof(int));
 
     for (int i = 0; i < number_arr; i++)
@@ -197,14 +198,13 @@ int *Getaray() // On récupère le tableau de la quantité de chaque item et on 
     return arr;
 }
 
-void free_array(int *arr) // On libère la mémoire 
+/**
+ * @brief Libère la mémoire
+ * @param arr
+ * @return int 
+ * 
+ */
+void free_array(int *arr)
 {
-    /**
-     * @brief Construct a new free object
-     * 
-     * @param arr
-     * @return int
-     * 
-     */
     free(arr);
 }

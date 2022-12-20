@@ -1,3 +1,13 @@
+##
+# @file main.py
+# @author Gaudry Carlier and Noé Landré
+# @brief Fichier contenant le code python du programme 
+# @version 1.0
+# @date 2022-12-19
+# 
+# @copyright Copyright (c) 2022
+# 
+
 from ctypes import alignment, c_int, cdll, POINTER, Structure
 from pathlib import Path
 import sys

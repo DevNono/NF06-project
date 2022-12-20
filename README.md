@@ -33,3 +33,7 @@ pip install -r python/requirements.txt
 cd python
 python main.py
 ```
+
+## Documentation
+
+La documentation est disponible en ouvrant le fichier `./docs/html/index.html` dans un navigateur web.
